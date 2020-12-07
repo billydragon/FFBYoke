@@ -6,11 +6,11 @@
 
 #define ENCODER_PR_X        1000
 #define ENCODER_PR_Y        1000
-#define MAXANGLE_X          900
-#define MAXANGLE_Y          900
-#define TOTALGAIN_X           0.2
-#define TOTALGAIN_Y           0.2
-
+#define MAXANGLE_X          630
+#define MAXANGLE_Y          630
+#define TOTALGAIN_X          1
+#define TOTALGAIN_Y          1
+#define LIMIT_SWITCH        4
 
 class YokeConfig {
   public:
@@ -27,6 +27,7 @@ class YokeConfig {
         uint16_t configMaxAngle_Y;    
         bool configInverted_Y;
         bool configResetEncoderPosition_Y;
+  
 };
 
 

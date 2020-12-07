@@ -52,7 +52,8 @@ class Encoder {
     Axis axis[2];
     void setConfig(YokeConfig yokeConfig);
     void initVariables(void);
-    void updatePosition(void);
+    void updatePosition_X(void);
+    void updatePosition_Y(void);
 
     void tick_X(void);
     void tick_Y(void);

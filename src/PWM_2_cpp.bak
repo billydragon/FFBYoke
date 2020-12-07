@@ -14,11 +14,13 @@ void Pwm::begin(){
 
     pinMode(Dir_X,OUTPUT);
     pinMode(Dir_Y,OUTPUT);
+	
+
 // Configure Timer 1 (Pins 9, 10 and 11)
 // It will operate at 62kHz
 // Valid options are: 
 //      PWM62k, PWM8k, PWM1k, PWM244 and PWM61
-pwm91011configure(PWM62k);
+pwm91011configure(PWM1k);
 
 // Configure Timer 4 (Pins 6 and 13)
 // It will operate at 187kHz
@@ -56,29 +58,29 @@ void Pwm::setPWM_X(int16_t forces) {
 	int nomalizedForce_X =  map (forces, -255,255, MINFORCE, MAXFORCE); 
 	
 	if (nomalizedForce_X >= 0) {
-        digitalWriteFast(Dir_X,HIGH);
-		PWM9 = nomalizedForce_X;
+        digitalWriteFast(Dir_X,LOW);
+		//PWM9 = nomalizedForce_X;
+		pwmSet9(nomalizedForce_X);
 	} else {
-		digitalWriteFast(Dir_X,LOW);
-		PWM9 = -nomalizedForce_X;
+		digitalWriteFast(Dir_X,HIGH);
+		//PWM9 = abs(nomalizedForce_X);
+		pwmSet9(abs(nomalizedForce_X));
 	}
-
-	
-
 	delay(10);
  }
 
  void Pwm::setPWM_Y(int16_t forces) {
 	int nomalizedForce_Y =  map (forces, -255,255, MINFORCE, MAXFORCE); 
 		if (nomalizedForce_Y >= 0) {
-				digitalWriteFast(Dir_Y,HIGH);
-				PWM10 = nomalizedForce_Y;
-			} else {
 				digitalWriteFast(Dir_Y,LOW);
-				PWM10 = -nomalizedForce_Y;
+				//PWM10 = nomalizedForce_Y;
+				pwmSet10(nomalizedForce_Y);
+			} else {
+				digitalWriteFast(Dir_Y,HIGH);
+				//PWM10 = abs(nomalizedForce_Y);
+				pwmSet10(abs(nomalizedForce_Y));
 			}
 			delay(10);
-
  }
  
 
@@ -91,22 +93,17 @@ void Pwm::pwm91011configure(int mode)
 //  00 : Channel B disabled D10
 //  00 : Channel C disabled D11
 //  01 : Fast PWM 8 bit
-
-//TCCR1A=1;
-
-TCCR1A = 0b10100000;
-TCCR1B = 0b00010001;   
-ICR1 = MAXFORCE;
-OCR1A = 0;
-OCR1B = 0;   
+TCCR1A=1;
 
 // TCCR1B configuration
 // Clock mode and Fast PWM 8 bit
-//TCCR1B=mode|0x08;  
+TCCR1B=mode|0x08;  
 
 // TCCR1C configuration
 TCCR1C=0;
 }
+
+
 
 // Set PWM to D9
 // Argument is PWM between 0 and 255
@@ -180,4 +177,3 @@ OCR4A=value;   // Set PWM value
 DDRC|=1<<7;    // Set Output Mode C7
 TCCR4A=0x82;  // Activate channel A
 }
-

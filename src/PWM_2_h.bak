@@ -43,6 +43,13 @@ History:
 #define PWM10  OCR1B
 #define PWM11  OCR1C
 
+// Direct PWM change variables
+#define PWM6        OCR4D
+#define PWM13       OCR4A
+
+
+// Terminal count
+#define PWM6_13_MAX OCR4C
 
 // Frequency modes for TIMER4
 #define PWM187k 1   // 187500 Hz
@@ -53,21 +60,15 @@ History:
 #define PWM6k   6   //   5859 Hz
 #define PWM3k   7   //   2930 Hz
 
-// Direct PWM change variables
-#define PWM6        OCR4D
-#define PWM13       OCR4A
-
-// Terminal count
-#define PWM6_13_MAX OCR4C
 
 // Macro to converts from duty (0..100) to PWM (0..255)
 #define DUTY2PWM(x)  ((255*(x))/100)
-#define PWM_FREQ 20000.0f
-#define MAXFORCE (F_CPU/(PWM_FREQ*2)) //16000000 is system clock of Leonardo
-
-#define MINFORCE (-MAXFORCE)
+#define MAXFORCE      255       //(F_CPU/(PWM_FREQ*2)) //16000000 is system clock of Leonardo
+#define MINFORCE     (-MAXFORCE)
 #define Dir_X       8
 #define Dir_Y       11
+
+
 
 class Pwm {
  public:   
@@ -76,6 +77,8 @@ class Pwm {
    void begin();
    void setPWM_X(int16_t forces);
    void setPWM_Y(int16_t forces);
+  
+   
    
    private:
     void pwm91011configure(int mode);

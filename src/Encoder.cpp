@@ -46,7 +46,7 @@ void Encoder::initVariables() {
   }
 }
 
-void  Encoder::updatePosition() {
+void  Encoder::updatePosition_X() {
 
   /*  
   if (usePinZ) {
@@ -60,19 +60,46 @@ void  Encoder::updatePosition() {
       }
     }
   } */
-      for (int i=0;i<2;i++)
-      {
-        axis[i].positionChange = axis[i].currentPosition - axis[i].lastPosition;
+      
+        axis[0].positionChange = axis[0].currentPosition - axis[0].lastPosition;
         uint32_t currentEncoderTime = (int32_t) millis();
-        int16_t diffTime = (int16_t)(currentEncoderTime - axis[i].lastEncoderTime) ;
+        int16_t diffTime = (int16_t)(currentEncoderTime - axis[0].lastEncoderTime) ;
         if (diffTime > 0) {
-          axis[i].currentVelocity = axis[i].positionChange / diffTime;
-          axis[i].currentAcceleration = (abs(axis[i].currentVelocity) - abs(axis[i].lastVelocity)) / diffTime;
-          axis[i].lastEncoderTime = currentEncoderTime;
-          axis[i].lastVelocity = axis[i].currentVelocity;
+          axis[0].currentVelocity = axis[0].positionChange / diffTime;
+          axis[0].currentAcceleration = (abs(axis[0].currentVelocity) - abs(axis[0].lastVelocity)) / diffTime;
+          axis[0].lastEncoderTime = currentEncoderTime;
+          axis[0].lastVelocity = axis[0].currentVelocity;
         }
-        axis[i].lastPosition = axis[i].currentPosition;
+        axis[0].lastPosition = axis[0].currentPosition;
+      
+}
+
+void  Encoder::updatePosition_Y() {
+
+  /*  
+  if (usePinZ) {
+    currentPinZ = digitalReadFast(encoderPinZ);
+    if (z1stUp) {
+      correctPosition = correctPosition; //found correct position
+      z1stUp = true;
+    } else {
+      if (currentPosition > correctPosition * 0.05 || currentPosition < correctPosition * 0.05  ) {
+        currentPosition = correctPosition;
       }
+    }
+  } */
+      
+        axis[1].positionChange = axis[1].currentPosition - axis[1].lastPosition;
+        uint32_t currentEncoderTime = (int32_t) millis();
+        int16_t diffTime = (int16_t)(currentEncoderTime - axis[1].lastEncoderTime) ;
+        if (diffTime > 0) {
+          axis[1].currentVelocity = axis[1].positionChange / diffTime;
+          axis[1].currentAcceleration = (abs(axis[1].currentVelocity) - abs(axis[1].lastVelocity)) / diffTime;
+          axis[1].lastEncoderTime = currentEncoderTime;
+          axis[1].lastVelocity = axis[1].currentVelocity;
+        }
+        axis[1].lastPosition = axis[1].currentPosition;
+      
 }
 
 int8_t Encoder::parsePosition(uint8_t axis_num ) { //4 state

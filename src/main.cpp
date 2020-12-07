@@ -3,8 +3,10 @@
 #include "DigitalWriteFast.h"
 #include "YokeConfig.h"
 #include "Encoder.h"
-#include "PWM_2.h"
+#include "PWM.h"
 #include "PID_V2.h"
+
+
 
 Pwm pwm;
 YokeConfig yokeConfig;
@@ -15,9 +17,9 @@ int32_t last_xy_force[2] = {0,0};
 double Setpoint[2], Input[2], Output[2];
 //double Kp=2, Ki=5, Kd=1;
 double aggKp=4, aggKi=0.2, aggKd=1;
-double Kp[2] = {0.01,0.01};
-double Ki[2] = {0,0};
-double Kd[2] = {0.05,0.5};
+double Kp[2] = {5,5};
+double Ki[2] = {1,1};
+double Kd[2] = {0.01,0.01};
 PID myPID_X(&Input[0], &Output[0], &Setpoint[0], Kp[0], Ki[0], Kd[0], DIRECT);
 PID myPID_Y(&Input[1], &Output[1], &Setpoint[1], Kp[1], Ki[1], Kd[1], DIRECT);
 
@@ -41,24 +43,31 @@ void gotoPosition_X(int32_t targetPosition);
 void CalculateMaxSpeedAndMaxAcceleration_X();
 void gotoPosition_Y(int32_t targetPosition);
 void CalculateMaxSpeedAndMaxAcceleration_Y();
-
+void findCenter_X();
+void findCenter_Y();
 
 void setup() {
   // put your setup code here, to run once:
+  pinMode(LIMIT_SWITCH,INPUT_PULLUP);
   encoder.setConfig(yokeConfig);
   attachInterrupt(digitalPinToInterrupt(interrupt_XA), calculateEncoderPostion_X, CHANGE);
   attachInterrupt(digitalPinToInterrupt(interrupt_XB), calculateEncoderPostion_X, CHANGE);  
   attachInterrupt(digitalPinToInterrupt(interrupt_YA), calculateEncoderPostion_Y, CHANGE);
   attachInterrupt(digitalPinToInterrupt(interrupt_YB), calculateEncoderPostion_Y, CHANGE);  
   pwm.begin();
-  pwm.setPWM_X(0);  pwm.setPWM_Y(0);
+  pwm.setPWM_X(0);  
+  pwm.setPWM_Y(0);
+  pwm.servo_off_X();
+  pwm.servo_off_Y();
+  
+  
   Input[0] = encoder.axis[0].currentPosition;
   Input[1] = encoder.axis[1].currentPosition;
   myPID_X.SetMode(AUTOMATIC);
-  myPID_X.SetSampleTime(0.01);
+  myPID_X.SetSampleTime(1);
   myPID_X.SetOutputLimits(-50, 50);
   myPID_Y.SetMode(AUTOMATIC);
-  myPID_Y.SetSampleTime(0.01);
+  myPID_Y.SetSampleTime(1);
   myPID_Y.SetOutputLimits(-50, 50);
   Serial.begin(BAUD_RATE);
 
@@ -70,19 +79,10 @@ void setup() {
 void loop() {
   if (initialRun == true ) {
 //    position control is not correctly, wheel runs over disired postion serveral times before stop
-    pwm.setPWM_X(10);
-    gotoPosition_X(encoder.axis[0].minValue);
-    gotoPosition_X(encoder.axis[0].maxValue);
-    Joystick.setXAxisRange(encoder.axis[0].minValue,encoder.axis[0].maxValue);
-    gotoPosition_X( 0);
-    pwm.setPWM_X(0);
+    
+    findCenter_X();
     delay(1000);
-    pwm.setPWM_Y(10);
-    gotoPosition_Y(encoder.axis[1].minValue);
-    gotoPosition_Y(encoder.axis[1].maxValue);
-    Joystick.setYAxisRange(encoder.axis[1].minValue,encoder.axis[1].maxValue);
-    gotoPosition_Y( 0); 
-    pwm.setPWM_X(0);
+    findCenter_Y();
     initialRun = false;
 
   } else
@@ -98,7 +98,7 @@ void loop() {
 //    Wheel.encoder.maxPositionChange = 1151;
 //    Wheel.encoder.maxVelocity  = 72;
 //    Wheel.encoder.maxAcceleration = 33;
-    encoder.updatePosition();
+    encoder.updatePosition_X();
 
     if (encoder.axis[0].currentPosition > encoder.axis[0].maxValue) {
       Joystick.setXAxis(encoder.axis[0].maxValue);
@@ -106,6 +106,7 @@ void loop() {
       Joystick.setXAxis(encoder.axis[0].minValue);
     } else {
       //Joystick.setXAxis(map(encoder.axis[0].currentPosition, encoder.axis[0].minValue , encoder.axis[0].maxValue, -32768, 32767));
+    //gotoPosition_X( encoder.axis[0].currentPosition);
     Joystick.setXAxis(encoder.axis[0].currentPosition);
     }
 
@@ -115,15 +116,18 @@ void loop() {
     Serial.print("/");
     Serial.print(map(encoder.axis[0].currentPosition, encoder.axis[0].minValue , encoder.axis[0].maxValue, -32768, 32767));
     */
-
+    encoder.updatePosition_Y();
     if (encoder.axis[1].currentPosition > encoder.axis[1].maxValue) {
       Joystick.setYAxis(encoder.axis[1].maxValue);
     } else if (encoder.axis[1].currentPosition < encoder.axis[1].minValue) {
       Joystick.setYAxis(encoder.axis[1].minValue);
     } else {
       //Joystick.setYAxis(map(encoder.axis[1].currentPosition, encoder.axis[1].minValue , encoder.axis[1].maxValue, -32768, 32767));
+        //gotoPosition_Y( encoder.axis[1].currentPosition);
         Joystick.setYAxis(encoder.axis[1].currentPosition);
     }
+
+
     /*
     Serial.print(" Y: ");
     Serial.print(encoder.axis[1].currentPosition);
@@ -151,6 +155,10 @@ void loop() {
 //  set total gain = 0.2 need replace by wheelConfig.totalGain.
   pwm.setPWM_X(xy_force[0] * TOTALGAIN_X);
   pwm.setPWM_Y(xy_force[1] * TOTALGAIN_Y);
+    //Serial.print("Xf: ");
+   // Serial.print(xy_force[0] * TOTALGAIN_X);
+    //Serial.print(" Yf: ");
+   // Serial.println((xy_force[1] * TOTALGAIN_Y));
 
 }
 
@@ -162,7 +170,7 @@ effects[0].frictionMaxPositionChange = encoder.axis[0].lastPosition - encoder.ax
 effects[1].frictionMaxPositionChange = encoder.axis[1].maxValue;
 effects[0].inertiaMaxAcceleration = encoder.axis[0].maxValue;
 effects[1].inertiaMaxAcceleration = 100;
-effects[0].damperMaxVelocity = 10;
+effects[0].damperMaxVelocity = 100;
 effects[1].damperMaxVelocity = 100;
 
 effects[0].springPosition = encoder.axis[0].currentPosition;
@@ -221,13 +229,133 @@ void calculateEncoderPostion_Y() {
   encoder.tick_Y();
 }
 
+
+void findCenter_X()
+{
+  bool finding = true;
+  char buff[32];
+  int32_t Xmin=0,Xmax=0,center_X=0;
+  while (finding)
+  {
+    encoder.updatePosition_X();
+    Serial.print("X_MIN: ");
+    Serial.println(encoder.axis[0].currentPosition);
+    if(!digitalReadFast(LIMIT_SWITCH))
+    {
+      delay(50);
+      if(!digitalReadFast(LIMIT_SWITCH))
+      {
+        finding = false;
+        encoder.axis[0].currentPosition=0;
+        Xmin = encoder.axis[0].currentPosition;
+      }
+      
+    }
+  }
+  delay(2000);
+
+    finding = true;
+
+ while (finding)
+  {
+  
+    encoder.updatePosition_X();
+    Serial.print("X_MAX: ");
+    Serial.println(encoder.axis[0].currentPosition);
+    if(!digitalReadFast(LIMIT_SWITCH))
+    {
+      delay(25);
+      if(!digitalReadFast(LIMIT_SWITCH))
+      {
+        finding = false;
+        Xmax = encoder.axis[0].currentPosition;
+      }
+    }
+  }
+    center_X = (abs(Xmin) + Xmax)/2 -2;
+    encoder.axis[0].minValue = -center_X;
+    encoder.axis[0].maxValue =  center_X;
+    Joystick.setXAxisRange(encoder.axis[0].minValue,encoder.axis[0].maxValue);
+    sprintf(buff,"X: %ld,0,%ld",encoder.axis[0].minValue, encoder.axis[0].maxValue);
+    Serial.println(buff);
+    pwm.servo_on_X();
+    delay(2000);
+    pwm.setPWM_X(10);
+    //encoder.updatePosition_X();
+    gotoPosition_X(center_X);    //goto center X
+    encoder.axis[0].currentPosition=0;
+    Joystick.setXAxis(encoder.axis[0].currentPosition);
+    delay(100);
+    pwm.setPWM_X(0);
+    
+    
+}
+
+
+void findCenter_Y()
+{
+  bool finding = true;
+  char buff[32];
+  int32_t Ymin=0,Ymax=0,center_Y=0;
+  while (finding)
+  {
+    encoder.updatePosition_Y();
+    Serial.print("Y_MIN: ");
+    Serial.println(encoder.axis[1].currentPosition);
+    if(!digitalReadFast(LIMIT_SWITCH))
+    {
+      delay(25);
+      if(!digitalReadFast(LIMIT_SWITCH))
+      {
+      finding = false;
+      encoder.axis[1].currentPosition=0;
+      Ymin = encoder.axis[1].currentPosition;
+      }
+    }
+  }
+
+  delay(2000);
+    finding = true;
+ while (finding)
+  {
+    encoder.updatePosition_Y();
+     Serial.print("Y_MAX: ");
+    Serial.println(encoder.axis[1].currentPosition);
+    if(!digitalReadFast(LIMIT_SWITCH))
+    {
+      delay(25);
+      if(!digitalReadFast(LIMIT_SWITCH))
+      {
+      finding = false;
+      Ymax = encoder.axis[1].currentPosition;
+      }
+    }
+  }
+    center_Y = (abs(Ymin) + Ymax)/2-2;
+    encoder.axis[1].minValue = -center_Y;
+    encoder.axis[1].maxValue =  center_Y;
+    Joystick.setYAxisRange(encoder.axis[1].minValue,encoder.axis[1].maxValue);
+    sprintf(buff,"Y: %ld,0,%ld",encoder.axis[1].minValue, encoder.axis[1].maxValue);
+    Serial.println(buff);
+    pwm.servo_on_Y();
+    delay(2000);
+    pwm.setPWM_Y(10);
+    //encoder.updatePosition_Y();
+    gotoPosition_Y(center_Y);    //goto center Y
+    encoder.axis[1].currentPosition=0;
+    Joystick.setYAxis(encoder.axis[1].currentPosition);
+    delay(100);
+    pwm.setPWM_Y(0);
+   
+}
+
+
 void gotoPosition_X(int32_t targetPosition) {
   Setpoint[0] = targetPosition;
   while (encoder.axis[0].currentPosition != targetPosition) {
     Setpoint[0] = targetPosition;
-    encoder.updatePosition();
+    encoder.updatePosition_X();
     Input[0] = encoder.axis[0].currentPosition ;
-   
     myPID_X.Compute();
     pwm.setPWM_X(-Output[0]);
     CalculateMaxSpeedAndMaxAcceleration_X();
@@ -236,7 +364,6 @@ void gotoPosition_X(int32_t targetPosition) {
     Serial.print(" : ");
     Serial.print(Setpoint[0]);
     Serial.print(" : ");
-    //Serial.print("PWM: ");
     Serial.println(Output[0]);
   }
   
@@ -246,9 +373,8 @@ void gotoPosition_Y(int32_t targetPosition) {
   Setpoint[1] = targetPosition;
   while (encoder.axis[1].currentPosition != targetPosition) {
     Setpoint[1] = targetPosition;
-    encoder.updatePosition();
+    encoder.updatePosition_Y();
     Input[1] = encoder.axis[1].currentPosition ;
-   
     myPID_Y.Compute();
     pwm.setPWM_Y(-Output[1]);
     CalculateMaxSpeedAndMaxAcceleration_Y();
@@ -257,7 +383,6 @@ void gotoPosition_Y(int32_t targetPosition) {
     Serial.print(" : ");
     Serial.print(Setpoint[1]);
     Serial.print(" : ");
-    //Serial.print("PWM: ");
     Serial.println(Output[1]);
   }
 }
