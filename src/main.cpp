@@ -6,6 +6,8 @@
 #include "PWM.h"
 #include "PID_V2.h"
 
+#include "DAC8562.h"
+
 
 
 Pwm pwm;
@@ -292,7 +294,6 @@ void findCenter_X()
     Joystick.setXAxis(encoder.axis[0].currentPosition);
     delay(100);
     pwm.setPWM_X(0);
-    
     
 }
 

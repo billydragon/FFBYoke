@@ -4,15 +4,7 @@
 #include <Arduino.h>
 #include "YokeConfig.h"
 
-#define interrupt_XA  0
-#define interrupt_XB  1
-#define interrupt_YA  2
-#define interrupt_YB  3
 
-#define encoderPin_XA 0
-#define encoderPin_XB 1
-#define encoderPin_YA 2
-#define encoderPin_YB 3
 
 struct Axis{
     uint32_t cPR;
