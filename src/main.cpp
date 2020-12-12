@@ -23,6 +23,8 @@ double Kd[2] = {0.01,0.01};
 PID myPID_X(&Input[0], &Output[0], &Setpoint[0], Kp[0], Ki[0], Kd[0], DIRECT);
 PID myPID_Y(&Input[1], &Output[1], &Setpoint[1], Kp[1], Ki[1], Kd[1], DIRECT);
 
+volatile int LimitSwitchState=1;
+
 bool initialRun = true;
 
 Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID,JOYSTICK_TYPE_JOYSTICK,
@@ -45,6 +47,7 @@ void gotoPosition_Y(int32_t targetPosition);
 void CalculateMaxSpeedAndMaxAcceleration_Y();
 void findCenter_X();
 void findCenter_Y();
+void LimitSwitch_ISR();
 
 void setup() {
   // put your setup code here, to run once:
@@ -54,6 +57,8 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(interrupt_XB), calculateEncoderPostion_X, CHANGE);  
   attachInterrupt(digitalPinToInterrupt(interrupt_YA), calculateEncoderPostion_Y, CHANGE);
   attachInterrupt(digitalPinToInterrupt(interrupt_YB), calculateEncoderPostion_Y, CHANGE);  
+  attachInterrupt(digitalPinToInterrupt(LIMIT_SWITCH), LimitSwitch_ISR, CHANGE);
+
   pwm.begin();
   pwm.setPWM_X(0);  
   pwm.setPWM_Y(0);
@@ -229,6 +234,14 @@ void calculateEncoderPostion_Y() {
   encoder.tick_Y();
 }
 
+void LimitSwitch_ISR()
+{
+  
+      LimitSwitchState = digitalRead(LIMIT_SWITCH);
+
+  delay(DEBOUNCE_TIME);
+}
+
 
 void findCenter_X()
 {
@@ -240,19 +253,15 @@ void findCenter_X()
     encoder.updatePosition_X();
     Serial.print("X_MIN: ");
     Serial.println(encoder.axis[0].currentPosition);
-    if(!digitalReadFast(LIMIT_SWITCH))
+    if(!LimitSwitchState)
     {
-      delay(50);
-      if(!digitalReadFast(LIMIT_SWITCH))
-      {
+     
         finding = false;
         encoder.axis[0].currentPosition=0;
         Xmin = encoder.axis[0].currentPosition;
-      }
       
     }
   }
-  delay(2000);
 
     finding = true;
 
@@ -262,14 +271,10 @@ void findCenter_X()
     encoder.updatePosition_X();
     Serial.print("X_MAX: ");
     Serial.println(encoder.axis[0].currentPosition);
-    if(!digitalReadFast(LIMIT_SWITCH))
+    if(!LimitSwitchState)
     {
-      delay(25);
-      if(!digitalReadFast(LIMIT_SWITCH))
-      {
         finding = false;
         Xmax = encoder.axis[0].currentPosition;
-      }
     }
   }
     center_X = (abs(Xmin) + Xmax)/2 -2;
@@ -302,33 +307,26 @@ void findCenter_Y()
     encoder.updatePosition_Y();
     Serial.print("Y_MIN: ");
     Serial.println(encoder.axis[1].currentPosition);
-    if(!digitalReadFast(LIMIT_SWITCH))
+    if(!LimitSwitchState)
     {
-      delay(25);
-      if(!digitalReadFast(LIMIT_SWITCH))
-      {
+      
       finding = false;
       encoder.axis[1].currentPosition=0;
       Ymin = encoder.axis[1].currentPosition;
-      }
+      
     }
   }
 
-  delay(2000);
     finding = true;
  while (finding)
   {
     encoder.updatePosition_Y();
      Serial.print("Y_MAX: ");
     Serial.println(encoder.axis[1].currentPosition);
-    if(!digitalReadFast(LIMIT_SWITCH))
+    if(!LimitSwitchState)
     {
-      delay(25);
-      if(!digitalReadFast(LIMIT_SWITCH))
-      {
       finding = false;
       Ymax = encoder.axis[1].currentPosition;
-      }
     }
   }
     center_Y = (abs(Ymin) + Ymax)/2-2;

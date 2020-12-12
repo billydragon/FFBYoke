@@ -10,7 +10,8 @@
 #define MAXANGLE_Y          630
 #define TOTALGAIN_X          1
 #define TOTALGAIN_Y          1
-#define LIMIT_SWITCH        4
+#define LIMIT_SWITCH        7
+#define DEBOUNCE_TIME       50
 
 class YokeConfig {
   public:
