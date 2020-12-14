@@ -19,7 +19,7 @@ int32_t last_xy_force[2] = {0,0};
 double Setpoint[2], Input[2], Output[2];
 //double Kp=2, Ki=5, Kd=1;
 double aggKp=4, aggKi=0.2, aggKd=1;
-double Kp[2] = {5,5};
+double Kp[2] = {2,2};
 double Ki[2] = {1,1};
 double Kd[2] = {0.01,0.01};
 PID myPID_X(&Input[0], &Output[0], &Setpoint[0], Kp[0], Ki[0], Kd[0], DIRECT);
@@ -72,10 +72,10 @@ void setup() {
   Input[1] = encoder.axis[1].currentPosition;
   myPID_X.SetMode(AUTOMATIC);
   myPID_X.SetSampleTime(1);
-  myPID_X.SetOutputLimits(-50, 50);
+  myPID_X.SetOutputLimits(-PID_OUTPUT_LIMIT, PID_OUTPUT_LIMIT);
   myPID_Y.SetMode(AUTOMATIC);
   myPID_Y.SetSampleTime(1);
-  myPID_Y.SetOutputLimits(-50, 50);
+  myPID_Y.SetOutputLimits(-PID_OUTPUT_LIMIT, PID_OUTPUT_LIMIT);
   Serial.begin(BAUD_RATE);
 
   Joystick.begin(true);
@@ -89,7 +89,7 @@ void loop() {
     
     findCenter_X();
     delay(1000);
-    findCenter_Y();
+    //findCenter_Y();
     initialRun = false;
 
   } else
@@ -264,7 +264,8 @@ void findCenter_X()
       
     }
   }
-
+  delay(1000);
+  
     finding = true;
 
  while (finding)
@@ -287,7 +288,6 @@ void findCenter_X()
     Serial.println(buff);
     pwm.servo_on_X();
     delay(2000);
-    pwm.setPWM_X(10);
     //encoder.updatePosition_X();
     gotoPosition_X(center_X);    //goto center X
     encoder.axis[0].currentPosition=0;
@@ -317,7 +317,7 @@ void findCenter_Y()
       
     }
   }
-
+ delay(1000);
     finding = true;
  while (finding)
   {
@@ -338,7 +338,7 @@ void findCenter_Y()
     Serial.println(buff);
     pwm.servo_on_Y();
     delay(2000);
-    pwm.setPWM_Y(10);
+
     //encoder.updatePosition_Y();
     gotoPosition_Y(center_Y);    //goto center Y
     encoder.axis[1].currentPosition=0;

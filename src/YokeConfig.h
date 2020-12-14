@@ -8,8 +8,8 @@
 #define ENCODER_PR_Y        1000
 #define MAXANGLE_X          630
 #define MAXANGLE_Y          630
-#define TOTALGAIN_X          0.5
-#define TOTALGAIN_Y          0.5
+#define TOTALGAIN_X         0.5
+#define TOTALGAIN_Y         0.5
 
 #define interrupt_XA        0
 #define interrupt_XB        1
@@ -20,9 +20,10 @@
 #define encoderPin_XB       1
 #define encoderPin_YA       2
 #define encoderPin_YB       3
+
 #define LIMIT_SWITCH        7
 #define DEBOUNCE_TIME       50
-
+#define PID_OUTPUT_LIMIT    50
 
 class YokeConfig {
   public:

@@ -11,8 +11,8 @@
 
 #define Dir_X       8
 #define Dir_Y       11
-#define SERVO_ON_X         6
-#define SERVO_ON_Y          7
+#define SERVO_ON_X         5
+#define SERVO_ON_Y         6
 
 class Pwm {
  public:   
