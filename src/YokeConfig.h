@@ -23,7 +23,11 @@
 
 #define LIMIT_SWITCH        7
 #define DEBOUNCE_TIME       50
-#define PID_OUTPUT_LIMIT    50
+
+#define PID_OUTPUT_LIMIT    127
+#define KP      5
+#define KI      1
+#define KD      0.01
 
 class YokeConfig {
   public:

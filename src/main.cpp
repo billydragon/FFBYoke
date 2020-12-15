@@ -3,11 +3,14 @@
 #include "DigitalWriteFast.h"
 #include "YokeConfig.h"
 #include "Encoder.h"
-#include "PWM.h"
 #include "PID_V2.h"
-
 //#include "DAC8562.h"
 
+#ifdef _VARIANT_ARDUINO_DUE_X_
+#include "Due_DAC.h"
+#else
+#include "PWM.h"
+#endif
 
 
 Pwm pwm;
@@ -18,10 +21,10 @@ int32_t last_xy_force[2] = {0,0};
 
 double Setpoint[2], Input[2], Output[2];
 //double Kp=2, Ki=5, Kd=1;
-double aggKp=4, aggKi=0.2, aggKd=1;
-double Kp[2] = {2,2};
-double Ki[2] = {1,1};
-double Kd[2] = {0.01,0.01};
+//double aggKp=4, aggKi=0.2, aggKd=1;
+double Kp[2] = {KP,KP};
+double Ki[2] = {KI,KI};
+double Kd[2] = {KD,KD};
 PID myPID_X(&Input[0], &Output[0], &Setpoint[0], Kp[0], Ki[0], Kd[0], DIRECT);
 PID myPID_Y(&Input[1], &Output[1], &Setpoint[1], Kp[1], Ki[1], Kd[1], DIRECT);
 
@@ -61,6 +64,7 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(interrupt_YB), calculateEncoderPostion_Y, CHANGE);  
   attachInterrupt(digitalPinToInterrupt(LIMIT_SWITCH), LimitSwitch_ISR, CHANGE);
 
+  
   pwm.begin();
   pwm.setPWM_X(0);  
   pwm.setPWM_Y(0);
