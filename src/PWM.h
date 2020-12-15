@@ -1,5 +1,5 @@
-#ifndef PWM_H
-#define PWM_H
+#ifndef _PWM_H
+#define _PWM_H
 #include <Arduino.h>
 
 

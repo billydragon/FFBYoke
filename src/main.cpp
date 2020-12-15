@@ -11,7 +11,7 @@
 //#endif
 
 
-Pwm pwm;
+_Pwm pwm;
 YokeConfig yokeConfig;
 Encoder encoder; 
 int32_t xy_force[2] = {0,0};
