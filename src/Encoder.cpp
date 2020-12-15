@@ -119,6 +119,7 @@ int8_t Encoder::parsePosition(uint8_t axis_num ) { //4 state
     if (stat[axis_num].currentPinA && stat[axis_num].currentPinB) return 1;
     if (!stat[axis_num].currentPinA && !stat[axis_num].currentPinB) return -1;
   }
+  return -1;
 }
 
 //this code copy from Rotary Encoder of Matthias Hertel
