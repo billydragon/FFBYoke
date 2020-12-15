@@ -1,36 +1,57 @@
 #include "PWM.h"
 #include "DigitalWriteFast.h"
- Pwm::Pwm(void) {
+ _Pwm::_Pwm(void) {
 
  }
  
- Pwm::~Pwm() {
+ _Pwm::~_Pwm() {
 	 
  }
 
-void Pwm::begin(){
-	pinMode(9,OUTPUT);
-	pinMode(10,OUTPUT);
-	//pinMode(Dir_X,OUTPUT);
-    //pinMode(Dir_Y,OUTPUT);
+void _Pwm::begin(){
+
+	pinMode(PWM_X,OUTPUT);
+	pinMode(PWM_Y,OUTPUT);
+	pinMode(Dir_X,OUTPUT);
+    pinMode(Dir_Y,OUTPUT);
 	pinMode(SERVO_ON_X,OUTPUT);
 	pinMode(SERVO_ON_Y,OUTPUT);
 
-  // * PWM Pins 9 & 10, Timer 1 is using: Channel A OCR1A at Pin 9 and Channel B OCR1B  at Pin 10 *
-    TCCR1A = 0b10100000;
+    #ifdef _VARIANT_ARDUINO_DUE_X_
+	analogWriteResolution(12);
+	#else
+	 // * PWM Pins 9 & 10, Timer 1 is using: Channel A OCR1A at Pin 9 and Channel B OCR1B  at Pin 10 *
+	TCCR1A = 0b10100000;
     TCCR1B = 0b00010001;   
     ICR1 = MAXFORCE;
     OCR1A = 0;
     OCR1B = 0;   
+	#endif
+
 	setPWM_X(0);
     setPWM_Y(0);
+
   
 }
  
-void Pwm::setPWM_X(int16_t force) {
+void _Pwm::setPWM_X(int16_t force) {
 	//int nomalizedForce = map (force, -255,255, MINFORCE, MAXFORCE); 
-	int nomalizedForce = map (force, -255,255,0,MAXFORCE);// MINFORCE, MAXFORCE); 
-	PWM9 = nomalizedForce;
+	#ifdef _VARIANT_ARDUINO_DUE_X_
+	int nomalizedForce = map (force, -255,255,0,DAC_SCALE); 
+		if (force >= 0) 
+		{
+			digitalWriteFast(Dir_X,HIGH);
+			
+		}
+		else
+		{
+			digitalWriteFast(Dir_X,LOW);
+		}
+		analogWrite(PWM_X,nomalizedForce);
+	#else
+		int nomalizedForce = map (force, -255,255,0,MAXFORCE);// MINFORCE, MAXFORCE); 
+		PWM_X = nomalizedForce;
+	#endif
 	/*
 	if (nomalizedForce >= 0) {
 		digitalWriteFast(Dir_X,HIGH);
@@ -46,10 +67,24 @@ void Pwm::setPWM_X(int16_t force) {
 	*/
  }
  
- void Pwm::setPWM_Y(int16_t force) {
+ void _Pwm::setPWM_Y(int16_t force) {
 	//int nomalizedForce = map (force, -255,255, MINFORCE, MAXFORCE); 
+	#ifdef _VARIANT_ARDUINO_DUE_X_
+	int nomalizedForce = map (force, -255,255,0,DAC_SCALE); 
+		if (force >= 0) 
+		{
+			digitalWriteFast(Dir_Y,HIGH);
+			
+		}
+		else
+		{
+			digitalWriteFast(Dir_Y,LOW);
+		}
+		analogWrite(PWM_Y,nomalizedForce);
+	#else
 	int nomalizedForce = map (force, -255,255,0,MAXFORCE); // MINFORCE, MAXFORCE); 
-	PWM10 = nomalizedForce;
+	PWM_Y = nomalizedForce;
+	#endif
 
 	/*
 	if (nomalizedForce >= 0) {
@@ -66,22 +101,22 @@ void Pwm::setPWM_X(int16_t force) {
 	*/
  }
 
- void Pwm::servo_on_X()
+ void _Pwm::servo_on_X()
 {
 	digitalWriteFast(SERVO_ON_X,HIGH);
 }
 
-void Pwm::servo_on_Y()
+void _Pwm::servo_on_Y()
 {
 	digitalWriteFast(SERVO_ON_Y,HIGH);
 }
 
-void Pwm::servo_off_X()
+void _Pwm::servo_off_X()
 {
 	digitalWriteFast(SERVO_ON_X,LOW);
 }
 
-void Pwm::servo_off_Y()
+void _Pwm::servo_off_Y()
 {
 	digitalWriteFast(SERVO_ON_Y,LOW);
 }

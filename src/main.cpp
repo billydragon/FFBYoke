@@ -6,11 +6,9 @@
 #include "PID_V2.h"
 //#include "DAC8562.h"
 
-#ifdef _VARIANT_ARDUINO_DUE_X_
-#include "Due_DAC.h"
-#else
+//#ifdef _VARIANT_ARDUINO_DUE_X_
 #include "PWM.h"
-#endif
+//#endif
 
 
 Pwm pwm;
