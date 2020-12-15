@@ -3,14 +3,14 @@
 #include "DigitalWriteFast.h"
 #include "YokeConfig.h"
 #include "Encoder.h"
-#include "PWM.h"
-#include "PID_V2.h"
 
+#include "PID_V2.h"
 //#include "DAC8562.h"
 
+#include "PWM.h"
 
 
-Pwm pwm;
+_Pwm pwm;
 YokeConfig yokeConfig;
 Encoder encoder; 
 int32_t xy_force[2] = {0,0};
