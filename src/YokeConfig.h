@@ -11,10 +11,25 @@
 #define TOTALGAIN_X         0.5
 #define TOTALGAIN_Y         0.5
 
-#define interrupt_XA        0
-#define interrupt_XB        1
-#define interrupt_YA        2
-#define interrupt_YB        3
+#ifdef _VARIANT_ARDUINO_DUE_X_
+
+#define encoderPin_XA       22
+#define encoderPin_XB       23
+#define encoderPin_XZ       24
+#define encoderPin_YA       25
+#define encoderPin_YB       26
+#define encoderPin_YZ       27
+
+#define LIMIT_SWITCH        48
+
+#define PWM_X               DAC0
+#define PWM_Y               DAC1
+#define Dir_X               28
+#define Dir_Y               29
+#define SERVO_ON_X          30
+#define SERVO_ON_Y          31
+#define DAC_SCALE           4095
+#else
 
 #define encoderPin_XA       0
 #define encoderPin_XB       1
@@ -22,7 +37,20 @@
 #define encoderPin_YB       3
 
 #define LIMIT_SWITCH        7
-#define DEBOUNCE_TIME       50
+
+#define PWM_X  OCR1A
+#define PWM_Y  OCR1B
+#define PWM_FREQ 20000.0f
+#define MAXFORCE (F_CPU/(PWM_FREQ*2)) //16000000 is system clock of Leonardo
+#define MINFORCE (-MAXFORCE)
+
+#define Dir_X       8
+#define Dir_Y       11
+#define SERVO_ON_X         5
+#define SERVO_ON_Y         6
+#endif
+
+#define DEBOUNCE_TIME       5050
 
 #define PID_OUTPUT_LIMIT    127
 #define KP      5

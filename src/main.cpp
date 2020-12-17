@@ -5,10 +5,11 @@
 #include "Encoder.h"
 #include "PID_V2.h"
 //#include "DAC8562.h"
-
-//#ifdef _VARIANT_ARDUINO_DUE_X_
 #include "PWM.h"
-//#endif
+
+#ifdef _VARIANT_ARDUINO_DUE_X_
+#define Serial  SerialUSB
+#endif
 
 
 _Pwm pwm;
@@ -27,6 +28,8 @@ PID myPID_X(&Input[0], &Output[0], &Setpoint[0], Kp[0], Ki[0], Kd[0], DIRECT);
 PID myPID_Y(&Input[1], &Output[1], &Setpoint[1], Kp[1], Ki[1], Kd[1], DIRECT);
 
 volatile int LimitSwitchState=1;
+long debouncing_time = DEBOUNCE_TIME; //Debouncing Time in Milliseconds
+volatile unsigned long LimitSwitch_last_micros=0;
 
 bool initialRun = true;
 
@@ -56,11 +59,11 @@ void setup() {
   // put your setup code here, to run once:
   pinMode(LIMIT_SWITCH,INPUT_PULLUP);
   encoder.setConfig(yokeConfig);
-  attachInterrupt(digitalPinToInterrupt(interrupt_XA), calculateEncoderPostion_X, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(interrupt_XB), calculateEncoderPostion_X, CHANGE);  
-  attachInterrupt(digitalPinToInterrupt(interrupt_YA), calculateEncoderPostion_Y, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(interrupt_YB), calculateEncoderPostion_Y, CHANGE);  
-  attachInterrupt(digitalPinToInterrupt(LIMIT_SWITCH), LimitSwitch_ISR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(encoderPin_XA), calculateEncoderPostion_X, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(encoderPin_XB), calculateEncoderPostion_X, CHANGE);  
+  attachInterrupt(digitalPinToInterrupt(encoderPin_YA), calculateEncoderPostion_Y, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(encoderPin_YB), calculateEncoderPostion_Y, CHANGE);  
+  attachInterrupt(digitalPinToInterrupt(LIMIT_SWITCH), LimitSwitch_ISR, FALLING);
 
   
   pwm.begin();
@@ -82,7 +85,7 @@ void setup() {
 
   Joystick.begin(true);
   YokeSetGains();
-
+  LimitSwitch_last_micros = millis();
 }
 
 void loop() {
@@ -240,53 +243,57 @@ void calculateEncoderPostion_Y() {
 
 void LimitSwitch_ISR()
 {
-  
-      LimitSwitchState = digitalRead(LIMIT_SWITCH);
+  if((long)(millis() - LimitSwitch_last_micros) >= debouncing_time ) {
 
-  delay(DEBOUNCE_TIME);
+   LimitSwitchState = LOW;
+    
+  LimitSwitch_last_micros = millis();
+  }
+      
 }
 
 
 void findCenter_X()
 {
-  bool finding = true;
-  char buff[32];
+  char buff[48];
+  int32_t LastPos=0;
   int32_t Xmin=0,Xmax=0,center_X=0;
-  while (finding)
-  {
-    encoder.updatePosition_X();
-    Serial.print("X_MIN: ");
-    Serial.println(encoder.axis[0].currentPosition);
-    if(!LimitSwitchState)
-    {
-     
-        finding = false;
-        encoder.axis[0].currentPosition=0;
-        Xmin = encoder.axis[0].currentPosition;
-      
-    }
-  }
-  delay(1000);
-  
-    finding = true;
 
- while (finding)
+  Serial.print("Finding X Axis Center");
+    
+  while (LimitSwitchState)
   {
-  
     encoder.updatePosition_X();
-    Serial.print("X_MAX: ");
-    Serial.println(encoder.axis[0].currentPosition);
-    if(!LimitSwitchState)
+    if(LastPos != encoder.axis[0].currentPosition)
     {
-        finding = false;
-        Xmax = encoder.axis[0].currentPosition;
+    sprintf(buff,"X_min: %ld",encoder.axis[0].currentPosition);
+    Serial.println(buff);
+    LastPos = encoder.axis[0].currentPosition;
+    }
+    
+  }
+        encoder.axis[0].currentPosition=0;
+        Xmin = encoder.axis[0].currentPosition;      
+  delay(500);
+  LimitSwitchState= HIGH;
+    
+ while (LimitSwitchState)
+  {
+    encoder.updatePosition_X();
+    if(LastPos != encoder.axis[0].currentPosition)
+    {
+    sprintf(buff,"X_max: %ld",encoder.axis[0].currentPosition);
+    Serial.println(buff);
+    LastPos = encoder.axis[0].currentPosition;
     }
   }
-    center_X = (abs(Xmin) + Xmax)/2 -2;
+        Xmax = encoder.axis[0].currentPosition;
+       
+    center_X = (abs(Xmin) + Xmax)/2-2;
     encoder.axis[0].minValue = -center_X;
     encoder.axis[0].maxValue =  center_X;
     Joystick.setXAxisRange(encoder.axis[0].minValue,encoder.axis[0].maxValue);
-    sprintf(buff,"X: %ld,0,%ld",encoder.axis[0].minValue, encoder.axis[0].maxValue);
+    sprintf(buff,"Set X: %ld,0,%ld",encoder.axis[0].minValue, encoder.axis[0].maxValue);
     Serial.println(buff);
     pwm.servo_on_X();
     delay(2000);
@@ -296,62 +303,67 @@ void findCenter_X()
     Joystick.setXAxis(encoder.axis[0].currentPosition);
     delay(100);
     pwm.setPWM_X(0);
-    
+    LimitSwitchState= HIGH;
 }
 
 
 void findCenter_Y()
 {
-  bool finding = true;
-  char buff[32];
+ 
+  char buff[48];
+  int32_t LastPos =0;
   int32_t Ymin=0,Ymax=0,center_Y=0;
-  while (finding)
+
+   Serial.print("Finding Y Axis Center");
+   
+  while (LimitSwitchState)
   {
     encoder.updatePosition_Y();
-    Serial.print("Y_MIN: ");
-    Serial.println(encoder.axis[1].currentPosition);
-    if(!LimitSwitchState)
+     if(LastPos != encoder.axis[1].currentPosition)
     {
-      
-      finding = false;
+    sprintf(buff,"Y_min: %ld",encoder.axis[1].currentPosition);
+    Serial.println(buff);
+      LastPos = encoder.axis[1].currentPosition;
+    }
+  }    
       encoder.axis[1].currentPosition=0;
       Ymin = encoder.axis[1].currentPosition;
       
-    }
-  }
- delay(1000);
-    finding = true;
- while (finding)
+ delay(500);
+  LimitSwitchState= HIGH;
+ while (LimitSwitchState)
   {
     encoder.updatePosition_Y();
-     Serial.print("Y_MAX: ");
-    Serial.println(encoder.axis[1].currentPosition);
-    if(!LimitSwitchState)
+     if(LastPos != encoder.axis[1].currentPosition)
     {
-      finding = false;
-      Ymax = encoder.axis[1].currentPosition;
+    sprintf(buff,"Y_max: %ld",encoder.axis[1].currentPosition);
+    Serial.println(buff);
+      LastPos = encoder.axis[1].currentPosition;
     }
   }
+      Ymax = encoder.axis[1].currentPosition;
+     
     center_Y = (abs(Ymin) + Ymax)/2-2;
     encoder.axis[1].minValue = -center_Y;
     encoder.axis[1].maxValue =  center_Y;
     Joystick.setYAxisRange(encoder.axis[1].minValue,encoder.axis[1].maxValue);
-    sprintf(buff,"Y: %ld,0,%ld",encoder.axis[1].minValue, encoder.axis[1].maxValue);
+    sprintf(buff,"Set Y: %ld,0,%ld",encoder.axis[1].minValue, encoder.axis[1].maxValue);
     Serial.println(buff);
     pwm.servo_on_Y();
     delay(2000);
-
     //encoder.updatePosition_Y();
     gotoPosition_Y(center_Y);    //goto center Y
     encoder.axis[1].currentPosition=0;
     Joystick.setYAxis(encoder.axis[1].currentPosition);
     delay(100);
     pwm.setPWM_Y(0);
+    LimitSwitchState= HIGH;
    
 }
 
 
 void gotoPosition_X(int32_t targetPosition) {
+  char buff[64];
   Setpoint[0] = targetPosition;
   while (encoder.axis[0].currentPosition != targetPosition) {
     Setpoint[0] = targetPosition;
@@ -360,17 +372,14 @@ void gotoPosition_X(int32_t targetPosition) {
     myPID_X.Compute();
     pwm.setPWM_X(-Output[0]);
     CalculateMaxSpeedAndMaxAcceleration_X();
-    Serial.print("X: ");
-    Serial.print(encoder.axis[0].currentPosition);
-    Serial.print(" : ");
-    Serial.print(Setpoint[0]);
-    Serial.print(" : ");
-    Serial.println(Output[0]);
+    sprintf(buff,"X Possition: %ld : Target: %ld : Force: %d",encoder.axis[0].currentPosition, (int32_t)Setpoint[0], (int)Output[0] );
+    Serial.println(buff);
   }
   
 }
 
 void gotoPosition_Y(int32_t targetPosition) {
+  char buff[64];
   Setpoint[1] = targetPosition;
   while (encoder.axis[1].currentPosition != targetPosition) {
     Setpoint[1] = targetPosition;
@@ -379,12 +388,8 @@ void gotoPosition_Y(int32_t targetPosition) {
     myPID_Y.Compute();
     pwm.setPWM_Y(-Output[1]);
     CalculateMaxSpeedAndMaxAcceleration_Y();
-    Serial.print("Y: ");
-    Serial.print(encoder.axis[1].currentPosition);
-    Serial.print(" : ");
-    Serial.print(Setpoint[1]);
-    Serial.print(" : ");
-    Serial.println(Output[1]);
+    sprintf(buff,"Y Possition: %ld : Target: %ld : Force: %d",encoder.axis[1].currentPosition, (int32_t)Setpoint[1], (int)Output[1] );
+    Serial.println(buff);
   }
 }
 

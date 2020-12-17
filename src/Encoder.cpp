@@ -76,19 +76,6 @@ void  Encoder::updatePosition_X() {
 
 void  Encoder::updatePosition_Y() {
 
-  /*  
-  if (usePinZ) {
-    currentPinZ = digitalReadFast(encoderPinZ);
-    if (z1stUp) {
-      correctPosition = correctPosition; //found correct position
-      z1stUp = true;
-    } else {
-      if (currentPosition > correctPosition * 0.05 || currentPosition < correctPosition * 0.05  ) {
-        currentPosition = correctPosition;
-      }
-    }
-  } */
-      
         axis[1].positionChange = axis[1].currentPosition - axis[1].lastPosition;
         uint32_t currentEncoderTime = (int32_t) millis();
         int16_t diffTime = (int16_t)(currentEncoderTime - axis[1].lastEncoderTime) ;
@@ -130,7 +117,7 @@ const int8_t KNOBDIR[] = {
 0,  1, -1,  0  };
 
 void Encoder::tick_X(void)
-{
+{             //digitalReadFast
   int sig1 = digitalReadFast(encoderPin_XA);
   int sig2 = digitalReadFast(encoderPin_XB);
   int8_t thisState = sig1 | (sig2 << 1);

@@ -23,6 +23,8 @@ struct Axis{
     int32_t  maxAcceleration;
     int32_t  positionChange;
     int32_t  maxPositionChange;
+   
+
 };
 
 struct Stat{
@@ -31,7 +33,10 @@ struct Stat{
     volatile bool lastPinA;
     volatile bool currentPinB;
     volatile bool lastPinB;
-    volatile int8_t oldState;
+    volatile bool oldState;
+    volatile bool currentPinZ;
+    volatile bool lastPinZ;
+    volatile bool z1stUp = false;
 
 };
 
