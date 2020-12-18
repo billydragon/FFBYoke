@@ -9,12 +9,9 @@ class _Pwm {
    _Pwm(void);
    ~_Pwm(void);
    void begin();
-   void setPWM_X(int16_t forces);
-   void setPWM_Y(int16_t forces);
-   void servo_on_X();
-   void servo_on_Y();
-   void servo_off_X();
-   void servo_off_Y();
+   void setPWM(int idx, int16_t forces);
+   void servo_on(int idx);
+   void servo_off(int idx);
 };
 
 #endif

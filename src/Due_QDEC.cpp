@@ -1,7 +1,7 @@
 #include "Due_QDEC.h"
 
 
-
+#ifdef _VARIANT_ARDUINO_DUE_X_
 
 Due_QDEC::Due_QDEC() {
   
@@ -94,54 +94,52 @@ void Due_QDEC::initVariables() {
   }
 }
 
-void  Due_QDEC::updatePosition_X() {
+void  Due_QDEC::updatePosition(int idx) {
 
-        axis[0].currentPosition = REG_TC0_CV0;  // Value of Encoder X
-        axis[0].positionChange = axis[0].currentPosition - axis[0].lastPosition;
+      axis[0].currentPosition = REG_TC0_CV0; 
+      axis[1].currentPosition = REG_TC2_CV0;
+
+         // Value of Encoder X
+        axis[idx].positionChange = axis[idx].currentPosition - axis[idx].lastPosition;
         uint32_t currentEncoderTime = (int32_t) millis();
-        int16_t diffTime = (int16_t)(currentEncoderTime - axis[0].lastEncoderTime) ;
+        int16_t diffTime = (int16_t)(currentEncoderTime - axis[idx].lastEncoderTime) ;
         if (diffTime > 0) {
-          axis[0].currentVelocity = axis[0].positionChange / diffTime;
-          axis[0].currentAcceleration = (abs(axis[0].currentVelocity) - abs(axis[0].lastVelocity)) / diffTime;
-          axis[0].lastEncoderTime = currentEncoderTime;
-          axis[0].lastVelocity = axis[0].currentVelocity;
+          axis[idx].currentVelocity = axis[idx].positionChange / diffTime;
+          axis[idx].currentAcceleration = (abs(axis[idx].currentVelocity) - abs(axis[idx].lastVelocity)) / diffTime;
+          axis[idx].lastEncoderTime = currentEncoderTime;
+          axis[idx].lastVelocity = axis[idx].currentVelocity;
         }
-        axis[0].lastPosition = axis[0].currentPosition;
+        axis[idx].lastPosition = axis[idx].currentPosition;
       
 }
 
-void  Due_QDEC::updatePosition_Y() {
-        axis[1].currentPosition = REG_TC2_CV0;
-        axis[1].positionChange = axis[1].currentPosition - axis[1].lastPosition;
-        uint32_t currentEncoderTime = (int32_t) millis();
-        int16_t diffTime = (int16_t)(currentEncoderTime - axis[1].lastEncoderTime) ;
-        if (diffTime > 0) {
-          axis[1].currentVelocity = axis[1].positionChange / diffTime;
-          axis[1].currentAcceleration = (abs(axis[1].currentVelocity) - abs(axis[1].lastVelocity)) / diffTime;
-          axis[1].lastEncoderTime = currentEncoderTime;
-          axis[1].lastVelocity = axis[1].currentVelocity;
-        }
-        axis[1].lastPosition = axis[1].currentPosition;
-      
-}
 
-void Due_QDEC::Reset_Encoder_X()
+void Due_QDEC::Reset_Encoder(int idx)
 {
-    REG_TC0_CCR0 = TC_CCR_CLKDIS;  //disable clock
+  if (idx==0)
+  {
+      REG_TC0_CCR0 = TC_CCR_CLKDIS;  //disable clock
       REG_TC0_CCR0 = TC_CCR_CLKEN | TC_CCR_SWTRG;  //enable clock and set Trigger
                                                    //for Counter reset at the next clock
       activateCNT_TC0();  // Reset Counter TC0
-}
-
-void Due_QDEC::Reset_Encoder_Y()
-{
-    REG_TC2_CCR0 = TC_CCR_CLKDIS;  //disable clock
+      delay(500);
+  }
+  else
+  {
+      REG_TC2_CCR0 = TC_CCR_CLKDIS;  //disable clock
       REG_TC2_CCR0 = TC_CCR_CLKEN | TC_CCR_SWTRG;  //enable clock and set Trigger 
                                                    //for Counter reset at the next clock
 
        activateCNT_TC2();  // Reset Counter TC2
+       delay(500);
+  }
+  
+   
 }
+
+
 
 Due_QDEC::~Due_QDEC() {
 
 }
+#endif

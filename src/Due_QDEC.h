@@ -5,7 +5,7 @@
 #include "YokeConfig.h"
 
 
-
+#ifdef _VARIANT_ARDUINO_DUE_X_
 const int quadX_A = 2;
 const int quadX_B = 13;
 const unsigned int mask_quadX_A = digitalPinToBitMask(quadX_A);
@@ -43,14 +43,13 @@ class Due_QDEC {
     Axis axis[2];
     void setConfig(YokeConfig yokeConfig);
     void initVariables(void);
-    void updatePosition_X(void);
-    void updatePosition_Y(void);
+    void updatePosition(int idx);
+    
     void activateCNT_TC0();  
     void activateCNT_TC2();
-    void Reset_Encoder_X();
-    void Reset_Encoder_Y();
+    void Reset_Encoder(int idx);
 
-    
 };
 
+#endif
 #endif

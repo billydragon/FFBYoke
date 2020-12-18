@@ -8,9 +8,10 @@
 #define ENCODER_PR_Y        2000
 #define MAXANGLE_X          900
 #define MAXANGLE_Y          900
-
-#define TOTALGAIN_X         50
-#define TOTALGAIN_Y         50
+#define MAX_X_VALUE         8000
+#define MAX_Y_VALUE         6000
+#define TOTALGAIN_X         100
+#define TOTALGAIN_Y         100
 
 
 #ifdef _VARIANT_ARDUINO_DUE_X_
@@ -57,9 +58,9 @@
 
 #define ANALOG_RX           A0
 #define ANALOG_RY           A1
-#define DEBOUNCE_TIME       5050
+#define DEBOUNCE_TIME       50
 
-#define PID_OUTPUT_LIMIT    127
+#define PID_OUTPUT_LIMIT    255
 #define KP      5
 #define KI      1
 #define KD      0.01

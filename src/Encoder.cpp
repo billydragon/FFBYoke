@@ -16,15 +16,15 @@ void Encoder::setConfig(YokeConfig YokeConfig) {
   axis[0].cPR = YokeConfig.configCPR_X ;
   axis[0].maxAngle = YokeConfig.configMaxAngle_X;
   axis[0].inverted = YokeConfig.configInverted_X;
-  axis[0].maxValue = (float)axis[0].maxAngle / 2 / 360 * axis[0].cPR ;
-  axis[0].minValue =  - axis[0].maxValue;
+  axis[0].maxValue = MAX_X_VALUE;//(float)axis[0].maxAngle / 2 / 360 * axis[0].cPR ;
+  axis[0].minValue = -MAX_X_VALUE; //- axis[0].maxValue;
   stat[0].resetPosition = YokeConfig.configResetEncoderPosition_X;
 
   axis[1].cPR = YokeConfig.configCPR_Y ;
   axis[1].maxAngle = YokeConfig.configMaxAngle_Y;
   axis[1].inverted = YokeConfig.configInverted_Y;
-  axis[1].maxValue = (float)axis[1].maxAngle / 2 / 360 * axis[1].cPR ;
-  axis[1].minValue =  -axis[1].maxValue;
+  axis[1].maxValue = MAX_Y_VALUE;//(float)axis[1].maxAngle / 2 / 360 * axis[1].cPR ;
+  axis[1].minValue =  -MAX_Y_VALUE;//-axis[1].maxValue;
   stat[1].resetPosition = YokeConfig.configResetEncoderPosition_Y;
 
   initVariables();
@@ -47,7 +47,7 @@ void Encoder::initVariables() {
   }
 }
 
-void  Encoder::updatePosition_X() {
+void  Encoder::updatePosition(int idx) {
 
   /*  
   if (usePinZ) {
@@ -62,31 +62,16 @@ void  Encoder::updatePosition_X() {
     }
   } */
       
-        axis[0].positionChange = axis[0].currentPosition - axis[0].lastPosition;
+        axis[idx].positionChange = axis[idx].currentPosition - axis[idx].lastPosition;
         uint32_t currentEncoderTime = (int32_t) millis();
-        int16_t diffTime = (int16_t)(currentEncoderTime - axis[0].lastEncoderTime) ;
+        int16_t diffTime = (int16_t)(currentEncoderTime - axis[idx].lastEncoderTime) ;
         if (diffTime > 0) {
-          axis[0].currentVelocity = axis[0].positionChange / diffTime;
-          axis[0].currentAcceleration = (abs(axis[0].currentVelocity) - abs(axis[0].lastVelocity)) / diffTime;
-          axis[0].lastEncoderTime = currentEncoderTime;
-          axis[0].lastVelocity = axis[0].currentVelocity;
+          axis[idx].currentVelocity = axis[idx].positionChange / diffTime;
+          axis[idx].currentAcceleration = (abs(axis[idx].currentVelocity) - abs(axis[idx].lastVelocity)) / diffTime;
+          axis[idx].lastEncoderTime = currentEncoderTime;
+          axis[idx].lastVelocity = axis[idx].currentVelocity;
         }
-        axis[0].lastPosition = axis[0].currentPosition;
-      
-}
-
-void  Encoder::updatePosition_Y() {
-
-        axis[1].positionChange = axis[1].currentPosition - axis[1].lastPosition;
-        uint32_t currentEncoderTime = (int32_t) millis();
-        int16_t diffTime = (int16_t)(currentEncoderTime - axis[1].lastEncoderTime) ;
-        if (diffTime > 0) {
-          axis[1].currentVelocity = axis[1].positionChange / diffTime;
-          axis[1].currentAcceleration = (abs(axis[1].currentVelocity) - abs(axis[1].lastVelocity)) / diffTime;
-          axis[1].lastEncoderTime = currentEncoderTime;
-          axis[1].lastVelocity = axis[1].currentVelocity;
-        }
-        axis[1].lastPosition = axis[1].currentPosition;
+        axis[idx].lastPosition = axis[idx].currentPosition;
       
 }
 
