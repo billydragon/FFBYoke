@@ -4,23 +4,22 @@
 
 #define BAUD_RATE 115200
 
-#define ENCODER_PR_X        1000
-#define ENCODER_PR_Y        1000
+#define ENCODER_PR_X        2000
+#define ENCODER_PR_Y        2000
 #define MAXANGLE_X          630
 #define MAXANGLE_Y          630
 #define TOTALGAIN_X         0.5
 #define TOTALGAIN_Y         0.5
 
+
 #ifdef _VARIANT_ARDUINO_DUE_X_
 
-#define encoderPin_XA       22
-#define encoderPin_XB       23
-#define encoderPin_XZ       24
-#define encoderPin_YA       25
-#define encoderPin_YB       26
-#define encoderPin_YZ       27
+#define encoderPin_XA       2
+#define encoderPin_XB       13
+#define encoderPin_YA       5
+#define encoderPin_YB       4
 
-#define LIMIT_SWITCH        48
+#define LIMIT_SWITCH        A5
 
 #define PWM_X               DAC0
 #define PWM_Y               DAC1
@@ -29,12 +28,15 @@
 #define SERVO_ON_X          30
 #define SERVO_ON_Y          31
 #define DAC_SCALE           4095
+#define ADC_SCALE           4095
+
 #else
 
 #define encoderPin_XA       0
 #define encoderPin_XB       1
 #define encoderPin_YA       2
 #define encoderPin_YB       3
+
 
 #define LIMIT_SWITCH        7
 
@@ -48,8 +50,12 @@
 #define Dir_Y       11
 #define SERVO_ON_X         5
 #define SERVO_ON_Y         6
+#define DAC_SCALE           1023
+#define ADC_SCALE           1023
 #endif
 
+#define ANALOG_RX           A0
+#define ANALOG_RY           A1
 #define DEBOUNCE_TIME       5050
 
 #define PID_OUTPUT_LIMIT    127

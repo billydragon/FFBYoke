@@ -37,17 +37,19 @@ void _Pwm::begin(){
 void _Pwm::setPWM_X(int16_t force) {
 	//int nomalizedForce = map (force, -255,255, MINFORCE, MAXFORCE); 
 	#ifdef _VARIANT_ARDUINO_DUE_X_
-	int nomalizedForce = map (force, -255,255,0,DAC_SCALE); 
+	int nomalizedForce = map (force, -255,255,-DAC_SCALE,DAC_SCALE); 
 		if (force >= 0) 
 		{
 			digitalWriteFast(Dir_X,HIGH);
+			analogWrite(PWM_X,nomalizedForce);
 			
 		}
 		else
 		{
 			digitalWriteFast(Dir_X,LOW);
+			analogWrite(PWM_X,abs(nomalizedForce));
 		}
-		analogWrite(PWM_X,nomalizedForce);
+		
 	#else
 		int nomalizedForce = map (force, -255,255,0,MAXFORCE);// MINFORCE, MAXFORCE); 
 		PWM_X = nomalizedForce;
@@ -70,17 +72,19 @@ void _Pwm::setPWM_X(int16_t force) {
  void _Pwm::setPWM_Y(int16_t force) {
 	//int nomalizedForce = map (force, -255,255, MINFORCE, MAXFORCE); 
 	#ifdef _VARIANT_ARDUINO_DUE_X_
-	int nomalizedForce = map (force, -255,255,0,DAC_SCALE); 
+	int nomalizedForce = map (force, -255,255,-DAC_SCALE,DAC_SCALE); 
 		if (force >= 0) 
 		{
 			digitalWriteFast(Dir_Y,HIGH);
+			analogWrite(PWM_Y,nomalizedForce);
 			
 		}
 		else
 		{
 			digitalWriteFast(Dir_Y,LOW);
+			analogWrite(PWM_Y,abs(nomalizedForce));
 		}
-		analogWrite(PWM_Y,nomalizedForce);
+		
 	#else
 	int nomalizedForce = map (force, -255,255,0,MAXFORCE); // MINFORCE, MAXFORCE); 
 	PWM_Y = nomalizedForce;

@@ -2,19 +2,24 @@
 #include "Joystick.h"
 #include "DigitalWriteFast.h"
 #include "YokeConfig.h"
-#include "Encoder.h"
+
 #include "PID_V2.h"
 //#include "DAC8562.h"
 #include "PWM.h"
 
 #ifdef _VARIANT_ARDUINO_DUE_X_
 #define Serial  SerialUSB
+#include "Due_QDEC.h"
+Due_QDEC encoder; 
+#else
+#include "Encoder.h"
+Encoder encoder; 
 #endif
 
 
 _Pwm pwm;
 YokeConfig yokeConfig;
-Encoder encoder; 
+
 int32_t xy_force[2] = {0,0};
 int32_t last_xy_force[2] = {0,0};
 
@@ -34,9 +39,9 @@ volatile unsigned long LimitSwitch_last_micros=0;
 bool initialRun = true;
 
 Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID,JOYSTICK_TYPE_JOYSTICK,
-0, 0, // Button Count, Hat Switch Count
+8, 0, // Button Count, Hat Switch Count
 true, true, false, // X and Y, but no Z Axis
-false, false, false, // No Rx, Ry, or Rz
+true, true, false, // No Rx, Ry, or Rz
 false, false, // No rudder or throttle
 false, false, false); // No accelerator, brake, or steering
 
@@ -58,13 +63,26 @@ void LimitSwitch_ISR();
 void setup() {
   // put your setup code here, to run once:
   pinMode(LIMIT_SWITCH,INPUT_PULLUP);
-  encoder.setConfig(yokeConfig);
+  pinMode(ANALOG_RX,INPUT);
+  pinMode(ANALOG_RY,INPUT);
+
+ 
+  attachInterrupt(digitalPinToInterrupt(LIMIT_SWITCH), LimitSwitch_ISR, FALLING);
+
+
+  #ifdef _VARIANT_ARDUINO_DUE_X_
+
+  analogReadResolution(12);
+  #else
   attachInterrupt(digitalPinToInterrupt(encoderPin_XA), calculateEncoderPostion_X, CHANGE);
   attachInterrupt(digitalPinToInterrupt(encoderPin_XB), calculateEncoderPostion_X, CHANGE);  
   attachInterrupt(digitalPinToInterrupt(encoderPin_YA), calculateEncoderPostion_Y, CHANGE);
   attachInterrupt(digitalPinToInterrupt(encoderPin_YB), calculateEncoderPostion_Y, CHANGE);  
-  attachInterrupt(digitalPinToInterrupt(LIMIT_SWITCH), LimitSwitch_ISR, FALLING);
+  #endif
 
+  encoder.setConfig(yokeConfig);
+  Joystick.setRxAxisRange(0,ADC_SCALE);
+  Joystick.setRyAxisRange(0,ADC_SCALE);
   
   pwm.begin();
   pwm.setPWM_X(0);  
@@ -162,11 +180,13 @@ void loop() {
     } else if (encoder.axis[1].currentPosition <= encoder.axis[1].minValue) {
       xy_force[1] = -255;
     }
-
+      
   }
 //  set total gain = 0.2 need replace by wheelConfig.totalGain.
   pwm.setPWM_X(xy_force[0] * TOTALGAIN_X);
   pwm.setPWM_Y(xy_force[1] * TOTALGAIN_Y);
+  Joystick.setRxAxis(analogRead(ANALOG_RX));
+  Joystick.setRyAxis(analogRead(ANALOG_RY));
     //Serial.print("Xf: ");
    // Serial.print(xy_force[0] * TOTALGAIN_X);
     //Serial.print(" Yf: ");
@@ -233,6 +253,7 @@ Joystick.setGains(gain);
 
 }
 
+#ifndef _VARIANT_ARDUINO_DUE_X_
 void calculateEncoderPostion_X() {
   encoder.tick_X();
 }
@@ -240,6 +261,7 @@ void calculateEncoderPostion_X() {
 void calculateEncoderPostion_Y() {
   encoder.tick_Y();
 }
+#endif
 
 void LimitSwitch_ISR()
 {
@@ -260,7 +282,7 @@ void findCenter_X()
   int32_t Xmin=0,Xmax=0,center_X=0;
 
   Serial.print("Finding X Axis Center");
-    
+  LimitSwitchState = HIGH;
   while (LimitSwitchState)
   {
     encoder.updatePosition_X();
@@ -272,7 +294,8 @@ void findCenter_X()
     }
     
   }
-        encoder.axis[0].currentPosition=0;
+        encoder.Reset_Encoder_X();
+        encoder.axis[0].currentPosition=0;   
         Xmin = encoder.axis[0].currentPosition;      
   delay(500);
   LimitSwitchState= HIGH;
@@ -315,6 +338,7 @@ void findCenter_Y()
   int32_t Ymin=0,Ymax=0,center_Y=0;
 
    Serial.print("Finding Y Axis Center");
+   LimitSwitchState = HIGH;
    
   while (LimitSwitchState)
   {
@@ -326,6 +350,7 @@ void findCenter_Y()
       LastPos = encoder.axis[1].currentPosition;
     }
   }    
+      encoder.Reset_Encoder_Y();
       encoder.axis[1].currentPosition=0;
       Ymin = encoder.axis[1].currentPosition;
       

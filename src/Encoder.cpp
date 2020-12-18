@@ -1,5 +1,6 @@
 #include "Encoder.h"
 #include "DigitalWriteFast.h"
+#include "YokeConfig.h"
 
 Encoder::Encoder() {
   pinMode (encoderPin_XA, INPUT_PULLUP);
