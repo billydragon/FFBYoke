@@ -183,8 +183,8 @@ void loop() {
       
   }
 //  set total gain = 0.2 need replace by wheelConfig.totalGain.
-  pwm.setPWM_X(xy_force[0] * TOTALGAIN_X);
-  pwm.setPWM_Y(xy_force[1] * TOTALGAIN_Y);
+  pwm.setPWM_X(xy_force[0]);
+  pwm.setPWM_Y(xy_force[1]);
   Joystick.setRxAxis(analogRead(ANALOG_RX));
   Joystick.setRyAxis(analogRead(ANALOG_RY));
     //Serial.print("Xf: ");
@@ -222,7 +222,7 @@ Joystick.getForce(xy_force);
 void YokeSetGains(){
 
 //set x axis gains
-gain[0].totalGain = 100;
+gain[0].totalGain = TOTALGAIN_X;
 gain[0].constantGain = 100;
 gain[0].rampGain = 100;
 gain[0].squareGain = 100;
@@ -236,7 +236,7 @@ gain[0].inertiaGain = 100;
 gain[0].frictionGain = 100;
 
 //set y axis gains
-gain[1].totalGain = 100;
+gain[1].totalGain = TOTALGAIN_Y;
 gain[1].constantGain = 100;
 gain[1].rampGain = 100;
 gain[1].squareGain = 100;

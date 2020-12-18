@@ -6,10 +6,11 @@
 
 #define ENCODER_PR_X        2000
 #define ENCODER_PR_Y        2000
-#define MAXANGLE_X          630
-#define MAXANGLE_Y          630
-#define TOTALGAIN_X         0.5
-#define TOTALGAIN_Y         0.5
+#define MAXANGLE_X          900
+#define MAXANGLE_Y          900
+
+#define TOTALGAIN_X         50
+#define TOTALGAIN_Y         50
 
 
 #ifdef _VARIANT_ARDUINO_DUE_X_
