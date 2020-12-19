@@ -17,6 +17,14 @@ Encoder encoder;
 #endif
 
 
+struct BUTTONS{
+  
+    volatile uint8_t pinNumber;
+    volatile int CurrentState;
+    volatile int LastState;
+    volatile uint32_t millis_time;
+};
+
 _Pwm pwm;
 YokeConfig yokeConfig;
 
@@ -32,9 +40,7 @@ double Kd[2] = {KD,KD};
 PID myPID_X(&Input[0], &Output[0], &Setpoint[0], Kp[0], Ki[0], Kd[0], DIRECT);
 PID myPID_Y(&Input[1], &Output[1], &Setpoint[1], Kp[1], Ki[1], Kd[1], DIRECT);
 
-volatile int LimitSwitchState=1;
 long debouncing_time = DEBOUNCE_TIME; //Debouncing Time in Milliseconds
-volatile unsigned long LimitSwitch_last_micros=0;
 
 bool initialRun = true;
 
@@ -45,6 +51,8 @@ true, true, false, // No Rx, Ry, or Rz
 false, false, // No rudder or throttle
 false, false, false); // No accelerator, brake, or steering
 
+BUTTONS Buttons[8]; 
+
 Gains gain[2];
 EffectParams effects[2];
 
@@ -54,16 +62,17 @@ void GetForces();
 void gotoPosition(int idx, int32_t targetPosition);
 void CalculateMaxSpeedAndMaxAcceleration(int idx);
 void findCenter(int idx);
-void LimitSwitch_ISR();
+void Push_Button_01_ISR();
+void Update_Joystick_Buttons();
 
 void setup() {
   // put your setup code here, to run once:
-  pinMode(LIMIT_SWITCH,INPUT_PULLUP);
+  pinMode(PUSH_BUTTON_01,INPUT_PULLUP);
   pinMode(ANALOG_RX,INPUT);
   pinMode(ANALOG_RY,INPUT);
 
  
-  attachInterrupt(digitalPinToInterrupt(LIMIT_SWITCH), LimitSwitch_ISR, FALLING);
+  attachInterrupt(digitalPinToInterrupt(PUSH_BUTTON_01), Push_Button_01_ISR, CHANGE);
 
 
   #ifdef _VARIANT_ARDUINO_DUE_X_
@@ -99,7 +108,11 @@ void setup() {
 
   Joystick.begin(true);
   YokeSetGains();
-  LimitSwitch_last_micros = millis();
+  
+  Buttons[0].pinNumber = A5;
+  Buttons[0].CurrentState = HIGH;
+  Buttons[0].LastState = HIGH;
+  Buttons[0].millis_time = millis();
 }
 
 void loop() {
@@ -157,7 +170,17 @@ void loop() {
   pwm.setPWM(1,xy_force[1]);
   Joystick.setRxAxis(analogRead(ANALOG_RX));
   Joystick.setRyAxis(analogRead(ANALOG_RY));
+  Update_Joystick_Buttons();
    
+}
+
+
+void Update_Joystick_Buttons()
+{
+
+      Joystick.setButton(0, !Buttons[0].CurrentState);
+     
+
 }
 
 void GetForces()
@@ -229,83 +252,82 @@ void calculateEncoderPostion_Y() {
 }
 #endif
 
-void LimitSwitch_ISR()
+void Push_Button_01_ISR()
 {
-  if((long)(millis() - LimitSwitch_last_micros) >= debouncing_time ) {
+  int bState = digitalReadFast(Buttons[0].pinNumber);
+  if(Buttons[0].LastState != bState )
+  {
+     if((long)(millis() - Buttons[0].millis_time) > debouncing_time ) {
 
-   LimitSwitchState = LOW;
-    
-  LimitSwitch_last_micros = millis();
+        Buttons[0].CurrentState = bState;
+        Buttons[0].LastState = Buttons[0].CurrentState; 
+        Buttons[0].millis_time = millis();
+    }
   }
       
 }
 
+void AutoCalibration(uint8_t idx)
+{
+    
+    if (encoder.axis[idx].currentPosition < encoder.axis[idx].minValue)
+    {
+      encoder.axis[idx].minValue = encoder.axis[idx].currentPosition;
+    }
+    if (encoder.axis[idx].currentPosition > encoder.axis[idx].maxValue)
+    {
+      encoder.axis[idx].maxValue = encoder.axis[idx].currentPosition;
+    }
+
+}
+
+void Reset_Encoder(int idx)
+{
+     #ifdef _VARIANT_ARDUINO_DUE_X_
+      encoder.Reset_Encoder(idx);
+    #endif
+      encoder.axis[idx].currentPosition=0;
+
+      encoder.updatePosition(idx);
+
+}
 
 void findCenter(int idx)
 {
   char buff[48];
-  int32_t LastPos=0;
-  int32_t AxisMin=0,AxisMax=0,AxisCenter=0;
+  int32_t LastPos=0, Axis_Center=0 ,Axis_Range =0;
+ 
+ encoder.axis[idx].minValue =0;
+ encoder.axis[idx].maxValue =0;
+  Reset_Encoder(idx);
 
-  LimitSwitchState = HIGH;
-  delay(50);
-  while (LimitSwitchState)
+  while (Buttons[0].CurrentState)
   {
     encoder.updatePosition(idx);
     if(LastPos != encoder.axis[idx].currentPosition)
     {
-    sprintf(buff,"Axis[%d] min: %ld",idx, encoder.axis[idx].currentPosition);
+    AutoCalibration(idx);
+    sprintf(buff,"Axis[%d]: %ld,%ld", idx, encoder.axis[idx].minValue, encoder.axis[idx].maxValue);
     Serial.println(buff);
-    LastPos = encoder.axis[idx].currentPosition;
-    }
-    
-  }
-      #ifdef _VARIANT_ARDUINO_DUE_X_
-        encoder.Reset_Encoder(idx);
-      #endif
-      encoder.axis[idx].currentPosition=0;
-        AxisMin = encoder.axis[idx].currentPosition;      
-  delay(500);
-
-  LimitSwitchState= HIGH;
-    
- while (LimitSwitchState)
-  {
-    encoder.updatePosition(idx);
-    if(LastPos != encoder.axis[idx].currentPosition)
-    {
-    sprintf(buff,"Axis[%d] max: %ld",idx,encoder.axis[idx].currentPosition);
-    Serial.println(buff);
-    LastPos = encoder.axis[idx].currentPosition;
     }
   }
-        AxisMax = encoder.axis[idx].currentPosition;
-       
-    AxisCenter= (abs(AxisMin) + AxisMax)/2;
-    encoder.axis[idx].minValue = -AxisCenter;
-    encoder.axis[idx].maxValue =  AxisCenter;
-    //int min = map(encoder.axis[idx].minValue, encoder.axis[idx].minValue , encoder.axis[idx].maxValue, -32768, 32767);
-    //int max = map(encoder.axis[idx].maxValue, encoder.axis[idx].minValue , encoder.axis[idx].maxValue, -32768, 32767);
+    Axis_Center= (encoder.axis[idx].minValue + encoder.axis[idx].maxValue)/2;
+    Axis_Range =  abs(encoder.axis[idx].minValue) + abs(encoder.axis[idx].maxValue);
+    encoder.axis[idx].maxValue = Axis_Range/2;
+    encoder.axis[idx].minValue = -encoder.axis[idx].maxValue;
     Joystick.setXAxisRange(encoder.axis[idx].minValue, encoder.axis[idx].maxValue);
-    sprintf(buff,"Set Axis[%d]: %ld - 0 - %ld", idx, encoder.axis[idx].minValue, encoder.axis[idx].maxValue);
-    Serial.println(buff);
     pwm.servo_on(idx);
     delay(2000);
-    //encoder.updatePosition_X();
-    gotoPosition(idx, AxisCenter);    //goto center X
-    #ifdef _VARIANT_ARDUINO_DUE_X_
-        encoder.Reset_Encoder(idx);
-    #endif
-      encoder.axis[idx].currentPosition=0;
+    gotoPosition(idx, Axis_Center);    //goto center X
+    Reset_Encoder(idx);
+    sprintf(buff,"Set Axis[%d]: %ld - 0 - %ld", idx, encoder.axis[idx].minValue, encoder.axis[idx].maxValue);
+    Serial.println(buff);
     if(idx==0)
     Joystick.setXAxis(encoder.axis[idx].currentPosition);
     else
     Joystick.setYAxis(encoder.axis[idx].currentPosition);
-
-
     delay(100);
     pwm.setPWM(idx, 0);
-    LimitSwitchState= HIGH;
 }
 
 

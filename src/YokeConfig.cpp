@@ -20,5 +20,4 @@ void YokeConfig::SetDefault() {
   configMaxAngle_Y = (uint16_t) MAXANGLE_Y;
   configInverted_Y = false;
   configResetEncoderPosition_Y = false;
-
 }

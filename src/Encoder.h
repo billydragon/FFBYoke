@@ -34,9 +34,7 @@ struct Stat{
     volatile bool currentPinB;
     volatile bool lastPinB;
     volatile bool oldState;
-    volatile bool currentPinZ;
-    volatile bool lastPinZ;
-    volatile bool z1stUp = false;
+    
 
 };
 

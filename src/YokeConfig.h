@@ -21,7 +21,7 @@
 #define encoderPin_YA       5
 #define encoderPin_YB       4
 
-#define LIMIT_SWITCH        A5
+#define PUSH_BUTTON_01       A5
 
 #define PWM_X               DAC0
 #define PWM_Y               DAC1
@@ -73,7 +73,7 @@ class YokeConfig {
         void SetDefault();
         int16_t TotalGain[2];
         uint32_t configCPR_X;
-        uint16_t configMaxAngle_X;    
+        uint16_t configMaxAngle_X;   
         bool configInverted_X;
         bool configResetEncoderPosition_X;
         uint32_t configCPR_Y;
@@ -82,6 +82,8 @@ class YokeConfig {
         bool configResetEncoderPosition_Y;
   
 };
+
+
 
 
 #endif
