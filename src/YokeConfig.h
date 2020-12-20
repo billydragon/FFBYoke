@@ -56,9 +56,9 @@
 #define DEBOUNCE_TIME       50
 
 #define PID_OUTPUT_LIMIT    255
-#define KP      2
-#define KI      0.5
-#define KD      0.05
+#define KP      0.1
+#define KI      30
+#define KD      0.01
 
 struct Axis{
     uint32_t cPR;
