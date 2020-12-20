@@ -51,15 +51,15 @@ EffectParams effects[2];
 
 void calculateEncoderPostion(int idx);
 void YokeSetGains();
-void GetForces();
+void SetEffects();
 void gotoPosition(int idx, int32_t targetPosition);
 void CalculateMaxSpeedAndMaxAcceleration(int idx);
 void findCenter(int idx);
 void Push_Button_01_ISR();
 void Update_Joystick_Buttons();
 #ifndef _VARIANT_ARDUINO_DUE_X_
-void calculateEncoderPostion_X();
-void calculateEncoderPostion_Y();
+//void calculateEncoderPostion_X();
+//void calculateEncoderPostion_Y();
 #endif
 
 void setup() {
@@ -147,8 +147,8 @@ void loop() {
     }
 
 
-    GetForces();
-  
+    SetEffects();
+    Joystick.getForce(xy_force);
     xy_force[0] = constrain(xy_force[0], -255, 255);
     xy_force[1] = constrain(xy_force[1], -255, 255);
     
@@ -169,7 +169,7 @@ void loop() {
   CalculateMaxSpeedAndMaxAcceleration(0);
   pwm.setPWM(1,xy_force[1]);
   CalculateMaxSpeedAndMaxAcceleration(1);
-  
+
   Joystick.setRxAxis(analogRead(ANALOG_RX));
   Joystick.setRyAxis(analogRead(ANALOG_RY));
   Update_Joystick_Buttons();
@@ -185,29 +185,29 @@ void Update_Joystick_Buttons()
 
 }
 
-void GetForces()
+void SetEffects()
 {
+effects[0].springPosition = encoder.axis[0].currentPosition;
+effects[1].springPosition = encoder.axis[1].currentPosition;
 effects[0].springMaxPosition = encoder.axis[0].maxValue/2;
 effects[1].springMaxPosition = encoder.axis[1].maxValue/2;
+
+effects[0].frictionPositionChange = encoder.axis[0].positionChange; //lastX - posX;
+effects[1].frictionPositionChange = encoder.axis[1].positionChange; //lastY - posY;
 effects[0].frictionMaxPositionChange = encoder.axis[0].maxPositionChange;
 effects[1].frictionMaxPositionChange = encoder.axis[1].maxPositionChange;
+
+effects[0].inertiaAcceleration = encoder.axis[0].currentPosition;;
+effects[1].inertiaAcceleration = encoder.axis[1].currentPosition;;
 effects[0].inertiaMaxAcceleration = encoder.axis[0].maxAcceleration;
 effects[1].inertiaMaxAcceleration = encoder.axis[1].maxAcceleration;
+
+effects[0].damperVelocity=encoder.axis[0].currentVelocity;
+effects[1].damperVelocity=encoder.axis[1].currentVelocity;
 effects[0].damperMaxVelocity = encoder.axis[0].maxVelocity;
 effects[1].damperMaxVelocity = encoder.axis[1].maxVelocity;
 
-
-effects[0].springPosition = encoder.axis[0].currentPosition;
-effects[1].springPosition = encoder.axis[1].currentPosition;
-effects[0].frictionPositionChange = encoder.axis[0].positionChange; //lastX - posX;
-effects[1].frictionPositionChange = encoder.axis[1].positionChange; //lastY - posY;
-effects[0].inertiaAcceleration = encoder.axis[0].currentPosition;;
-effects[1].inertiaAcceleration = encoder.axis[1].currentPosition;;
-effects[0].damperVelocity=encoder.axis[0].currentVelocity;
-effects[1].damperVelocity=encoder.axis[1].currentVelocity;
-
 Joystick.setEffectParams(effects);
-Joystick.getForce(xy_force);
 
 }   
 
