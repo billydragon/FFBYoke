@@ -29,10 +29,10 @@
 
 #else
 
-#define encoderPin_XA       0
-#define encoderPin_XB       1
-#define encoderPin_YA       2
-#define encoderPin_YB       3
+#define encoderPin_XA    (int)0
+#define encoderPin_XB    (int)1
+#define encoderPin_YA    (int)2
+#define encoderPin_YB    (int)3
 
 
 #define PUSH_BUTTON_01        7

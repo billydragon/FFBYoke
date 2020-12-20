@@ -13,8 +13,8 @@
 
 Due_QDEC encoder; 
 #else
-#include "Encoder.h"
-Encoder encoder; 
+#include "QEncoder.h"
+QEncoder encoder; 
 #endif
 
 
@@ -80,13 +80,15 @@ void setup() {
 
   analogReadResolution(12);
   #else
+  /*
   attachInterrupt(digitalPinToInterrupt(encoderPin_XA), calculateEncoderPostion_X, CHANGE);
   attachInterrupt(digitalPinToInterrupt(encoderPin_XB), calculateEncoderPostion_X, CHANGE);  
   attachInterrupt(digitalPinToInterrupt(encoderPin_YA), calculateEncoderPostion_Y, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(encoderPin_YB), calculateEncoderPostion_Y, CHANGE);  
+  attachInterrupt(digitalPinToInterrupt(encoderPin_YB), calculateEncoderPostion_Y, CHANGE); 
+  */ 
   #endif
 
-  encoder.setConfig(yokeConfig);
+  //encoder.setConfig(yokeConfig);
   Joystick.setRxAxisRange(0,ADC_SCALE);
   Joystick.setRyAxisRange(0,ADC_SCALE);
   
@@ -164,7 +166,10 @@ void loop() {
   }
 
   pwm.setPWM(0,xy_force[0]);
+  CalculateMaxSpeedAndMaxAcceleration(0);
   pwm.setPWM(1,xy_force[1]);
+  CalculateMaxSpeedAndMaxAcceleration(1);
+  
   Joystick.setRxAxis(analogRead(ANALOG_RX));
   Joystick.setRyAxis(analogRead(ANALOG_RY));
   Update_Joystick_Buttons();
@@ -184,21 +189,22 @@ void GetForces()
 {
 effects[0].springMaxPosition = encoder.axis[0].maxValue/2;
 effects[1].springMaxPosition = encoder.axis[1].maxValue/2;
-effects[0].frictionMaxPositionChange = encoder.axis[0].lastPosition - encoder.axis[0].currentPosition;
-effects[1].frictionMaxPositionChange = encoder.axis[1].maxValue;
-effects[0].inertiaMaxAcceleration = encoder.axis[0].maxValue;
-effects[1].inertiaMaxAcceleration = 100;
-effects[0].damperMaxVelocity = 100;
-effects[1].damperMaxVelocity = 100;
+effects[0].frictionMaxPositionChange = encoder.axis[0].maxPositionChange;
+effects[1].frictionMaxPositionChange = encoder.axis[1].maxPositionChange;
+effects[0].inertiaMaxAcceleration = encoder.axis[0].maxAcceleration;
+effects[1].inertiaMaxAcceleration = encoder.axis[1].maxAcceleration;
+effects[0].damperMaxVelocity = encoder.axis[0].maxVelocity;
+effects[1].damperMaxVelocity = encoder.axis[1].maxVelocity;
+
 
 effects[0].springPosition = encoder.axis[0].currentPosition;
 effects[1].springPosition = encoder.axis[1].currentPosition;
-effects[0].frictionPositionChange = encoder.axis[0].lastPosition - encoder.axis[0].currentPosition; //lastX - posX;
-effects[1].frictionPositionChange = encoder.axis[1].lastPosition - encoder.axis[1].currentPosition; //lastY - posY;
-effects[0].inertiaAcceleration = 100;
-effects[1].inertiaAcceleration = 100;
-effects[0].damperVelocity=100;
-effects[1].damperVelocity=100;
+effects[0].frictionPositionChange = encoder.axis[0].positionChange; //lastX - posX;
+effects[1].frictionPositionChange = encoder.axis[1].positionChange; //lastY - posY;
+effects[0].inertiaAcceleration = encoder.axis[0].currentPosition;;
+effects[1].inertiaAcceleration = encoder.axis[1].currentPosition;;
+effects[0].damperVelocity=encoder.axis[0].currentVelocity;
+effects[1].damperVelocity=encoder.axis[1].currentVelocity;
 
 Joystick.setEffectParams(effects);
 Joystick.getForce(xy_force);
@@ -239,6 +245,7 @@ Joystick.setGains(gain);
 
 }
 
+/*
 #ifndef _VARIANT_ARDUINO_DUE_X_
 void calculateEncoderPostion_X() {
   encoder.tick_X();
@@ -248,7 +255,7 @@ void calculateEncoderPostion_Y() {
   encoder.tick_Y();
 }
 #endif
-
+*/
 void Push_Button_01_ISR()
 {
   int bState = digitalReadFast(Buttons[0].pinNumber);
