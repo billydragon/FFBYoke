@@ -13,19 +13,12 @@ Encoder::~Encoder() {
 }
 
 void Encoder::setConfig(YokeConfig YokeConfig) {
-  axis[0].cPR = YokeConfig.configCPR_X ;
-  axis[0].maxAngle = YokeConfig.configMaxAngle_X;
-  axis[0].inverted = YokeConfig.configInverted_X;
   axis[0].maxValue = MAX_X_VALUE;//(float)axis[0].maxAngle / 2 / 360 * axis[0].cPR ;
   axis[0].minValue = -MAX_X_VALUE; //- axis[0].maxValue;
-  stat[0].resetPosition = YokeConfig.configResetEncoderPosition_X;
-
-  axis[1].cPR = YokeConfig.configCPR_Y ;
-  axis[1].maxAngle = YokeConfig.configMaxAngle_Y;
-  axis[1].inverted = YokeConfig.configInverted_Y;
+  
   axis[1].maxValue = MAX_Y_VALUE;//(float)axis[1].maxAngle / 2 / 360 * axis[1].cPR ;
-  axis[1].minValue =  -MAX_Y_VALUE;//-axis[1].maxValue;
-  stat[1].resetPosition = YokeConfig.configResetEncoderPosition_Y;
+  axis[1].minValue = -MAX_Y_VALUE;//-axis[1].maxValue;
+ 
 
   initVariables();
 }
@@ -47,21 +40,9 @@ void Encoder::initVariables() {
   }
 }
 
-void  Encoder::updatePosition(int idx) {
+void  Encoder::updatePosition(int idx) 
+{
 
-  /*  
-  if (usePinZ) {
-    currentPinZ = digitalReadFast(encoderPinZ);
-    if (z1stUp) {
-      correctPosition = correctPosition; //found correct position
-      z1stUp = true;
-    } else {
-      if (currentPosition > correctPosition * 0.05 || currentPosition < correctPosition * 0.05  ) {
-        currentPosition = correctPosition;
-      }
-    }
-  } */
-      
         axis[idx].positionChange = axis[idx].currentPosition - axis[idx].lastPosition;
         uint32_t currentEncoderTime = (int32_t) millis();
         int16_t diffTime = (int16_t)(currentEncoderTime - axis[idx].lastEncoderTime) ;
@@ -71,8 +52,7 @@ void  Encoder::updatePosition(int idx) {
           axis[idx].lastEncoderTime = currentEncoderTime;
           axis[idx].lastVelocity = axis[idx].currentVelocity;
         }
-        axis[idx].lastPosition = axis[idx].currentPosition;
-      
+        axis[idx].lastPosition = axis[idx].currentPosition;  
 }
 
 int8_t Encoder::parsePosition(uint8_t axis_num ) { //4 state

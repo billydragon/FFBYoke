@@ -31,7 +31,6 @@ void _Pwm::begin(){
 	setPWM(0,0);
     setPWM(1,0);
 
-  
 }
  
 void _Pwm::setPWM(int idx, int16_t force) {
@@ -84,16 +83,22 @@ void _Pwm::setPWM(int idx, int16_t force) {
  
  void _Pwm::servo_on(int idx)
 {
-	if (idx ==0)
-	digitalWriteFast(SERVO_ON_X,HIGH);
+	if(idx == 0)
+	{ 
+		digitalWriteFast(SERVO_ON_X,HIGH);
+	}
+	
 	else
 	digitalWriteFast(SERVO_ON_Y,HIGH);
 }
 
+
 void _Pwm::servo_off(int idx)
 {
-	if (idx ==0)
-	digitalWriteFast(SERVO_ON_X,LOW);
+	if(idx == 0)
+	{ 
+		digitalWriteFast(SERVO_ON_X,LOW);
+	}
 	else
 	digitalWriteFast(SERVO_ON_Y,LOW);
 }

@@ -10,20 +10,13 @@
 #ifdef _VARIANT_ARDUINO_DUE_X_
 #define Serial  SerialUSB
 #include "Due_QDEC.h"
+
 Due_QDEC encoder; 
 #else
 #include "Encoder.h"
 Encoder encoder; 
 #endif
 
-
-struct BUTTONS{
-  
-    volatile uint8_t pinNumber;
-    volatile int CurrentState;
-    volatile int LastState;
-    volatile uint32_t millis_time;
-};
 
 _Pwm pwm;
 YokeConfig yokeConfig;
@@ -64,15 +57,23 @@ void CalculateMaxSpeedAndMaxAcceleration(int idx);
 void findCenter(int idx);
 void Push_Button_01_ISR();
 void Update_Joystick_Buttons();
+#ifndef _VARIANT_ARDUINO_DUE_X_
+void calculateEncoderPostion_X();
+void calculateEncoderPostion_Y();
+#endif
 
 void setup() {
   // put your setup code here, to run once:
-  pinMode(PUSH_BUTTON_01,INPUT_PULLUP);
+  
   pinMode(ANALOG_RX,INPUT);
   pinMode(ANALOG_RY,INPUT);
+  Buttons[0].pinNumber = PUSH_BUTTON_01;
+  Buttons[0].CurrentState = HIGH;
+  Buttons[0].LastState = HIGH;
+  Buttons[0].millis_time = millis();
+  pinMode(Buttons[0].pinNumber,INPUT_PULLUP);
 
- 
-  attachInterrupt(digitalPinToInterrupt(PUSH_BUTTON_01), Push_Button_01_ISR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(Buttons[0].pinNumber), Push_Button_01_ISR, CHANGE);
 
 
   #ifdef _VARIANT_ARDUINO_DUE_X_
@@ -109,10 +110,7 @@ void setup() {
   Joystick.begin(true);
   YokeSetGains();
   
-  Buttons[0].pinNumber = A5;
-  Buttons[0].CurrentState = HIGH;
-  Buttons[0].LastState = HIGH;
-  Buttons[0].millis_time = millis();
+  
 }
 
 void loop() {
@@ -123,7 +121,6 @@ void loop() {
     delay(1000);
     //findCenter(1);
     initialRun = false;
-
   } else
 
   {
@@ -208,8 +205,8 @@ Joystick.getForce(xy_force);
 
 }   
 
-void YokeSetGains(){
-
+void YokeSetGains()
+{
 //set x axis gains
 gain[0].totalGain = TOTALGAIN_X;
 gain[0].constantGain = 100;
@@ -297,9 +294,9 @@ void findCenter(int idx)
   char buff[48];
   int32_t LastPos=0, Axis_Center=0 ,Axis_Range =0;
  
- encoder.axis[idx].minValue =0;
- encoder.axis[idx].maxValue =0;
-  Reset_Encoder(idx);
+  encoder.axis[idx].minValue =0;
+  encoder.axis[idx].maxValue =0;
+    Reset_Encoder(idx);
 
   while (Buttons[0].CurrentState)
   {
@@ -313,7 +310,7 @@ void findCenter(int idx)
   }
     Axis_Center= (encoder.axis[idx].minValue + encoder.axis[idx].maxValue)/2;
     Axis_Range =  abs(encoder.axis[idx].minValue) + abs(encoder.axis[idx].maxValue);
-    encoder.axis[idx].maxValue = Axis_Range/2;
+    encoder.axis[idx].maxValue = Axis_Range/2 -50;
     encoder.axis[idx].minValue = -encoder.axis[idx].maxValue;
     Joystick.setXAxisRange(encoder.axis[idx].minValue, encoder.axis[idx].maxValue);
     pwm.servo_on(idx);
@@ -322,10 +319,18 @@ void findCenter(int idx)
     Reset_Encoder(idx);
     sprintf(buff,"Set Axis[%d]: %ld - 0 - %ld", idx, encoder.axis[idx].minValue, encoder.axis[idx].maxValue);
     Serial.println(buff);
-    if(idx==0)
-    Joystick.setXAxis(encoder.axis[idx].currentPosition);
-    else
-    Joystick.setYAxis(encoder.axis[idx].currentPosition);
+    switch (idx)
+    {
+    case 0:
+      Joystick.setXAxis(encoder.axis[idx].currentPosition);
+      break;
+    case 1:
+      Joystick.setYAxis(encoder.axis[idx].currentPosition);
+      break;
+    default:
+      break;
+    }
+   
     delay(100);
     pwm.setPWM(idx, 0);
 }

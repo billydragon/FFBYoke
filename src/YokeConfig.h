@@ -4,15 +4,10 @@
 
 #define BAUD_RATE 115200
 
-#define ENCODER_PR_X        2000
-#define ENCODER_PR_Y        2000
-#define MAXANGLE_X          900
-#define MAXANGLE_Y          900
-#define MAX_X_VALUE         8000
-#define MAX_Y_VALUE         6000
-#define TOTALGAIN_X         100
-#define TOTALGAIN_Y         100
-
+#define MAX_X_VALUE         4000
+#define MAX_Y_VALUE         3000
+#define TOTALGAIN_X         80
+#define TOTALGAIN_Y         80
 
 #ifdef _VARIANT_ARDUINO_DUE_X_
 
@@ -60,30 +55,46 @@
 #define ANALOG_RY           A1
 #define DEBOUNCE_TIME       50
 
-#define PID_OUTPUT_LIMIT    255
-#define KP      5
+#define PID_OUTPUT_LIMIT    200
+#define KP      2
 #define KI      1
 #define KD      0.01
+
+struct Axis{
+    uint32_t cPR;
+    uint16_t maxAngle;
+    int32_t maxValue;
+    int32_t  minValue;    
+    bool inverted;
+    uint32_t lastEncoderTime;
+    int32_t  currentPosition;
+    int32_t  lastPosition;
+    int32_t  correctPosition;    
+    int32_t  currentVelocity;
+    int32_t  lastVelocity;
+    int32_t  maxVelocity;
+    int32_t  currentAcceleration;
+    int32_t  maxAcceleration;
+    int32_t  positionChange;
+    int32_t  maxPositionChange;
+};
+
+
+struct BUTTONS{
+  
+    volatile uint8_t pinNumber;
+    volatile int CurrentState;
+    volatile int LastState;
+    volatile uint32_t millis_time;
+};
+
 
 class YokeConfig {
   public:
     
         YokeConfig(void);
+        void SetDefaults(void);
         ~YokeConfig(void);
-        void SetDefault();
-        int16_t TotalGain[2];
-        uint32_t configCPR_X;
-        uint16_t configMaxAngle_X;   
-        bool configInverted_X;
-        bool configResetEncoderPosition_X;
-        uint32_t configCPR_Y;
-        uint16_t configMaxAngle_Y;    
-        bool configInverted_Y;
-        bool configResetEncoderPosition_Y;
-  
 };
-
-
-
 
 #endif

@@ -16,25 +16,6 @@ const int quadY_B = 4;
 const unsigned int mask_quadY_A = digitalPinToBitMask(quadY_A);
 const unsigned int mask_quadY_B = digitalPinToBitMask(quadY_B);
 
-struct Axis{
-    uint32_t cPR;
-    uint16_t maxAngle;
-    int32_t maxValue;
-    int32_t  minValue;    
-    bool inverted;
-    uint32_t lastEncoderTime;
-    int32_t  currentPosition;
-    int32_t  lastPosition;
-    int32_t  correctPosition;    
-    int32_t  currentVelocity;
-    int32_t  lastVelocity;
-    int32_t  maxVelocity;
-    int32_t  currentAcceleration;
-    int32_t  maxAcceleration;
-    int32_t  positionChange;
-    int32_t  maxPositionChange;
-};
-
 
 class Due_QDEC {
   public:
