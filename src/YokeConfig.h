@@ -24,8 +24,8 @@
 #define Dir_Y               29
 #define SERVO_ON_X          30
 #define SERVO_ON_Y          31
-#define DAC_SCALE           4095
-#define ADC_SCALE           4095
+#define DUE_DAC_SCALE       4095
+#define DUE_ADC_SCALE       4095
 
 #else
 
