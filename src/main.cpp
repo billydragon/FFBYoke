@@ -30,8 +30,11 @@ double Setpoint[2], Input[2], Output[2];
 double Kp[2] = {KP,KP};
 double Ki[2] = {KI,KI};
 double Kd[2] = {KD,KD};
-PID myPID_X(&Input[0], &Output[0], &Setpoint[0], Kp[0], Ki[0], Kd[0], DIRECT);
-PID myPID_Y(&Input[1], &Output[1], &Setpoint[1], Kp[1], Ki[1], Kd[1], DIRECT);
+
+PID myPID[] = {PID(&Input[X_AXIS], &Output[X_AXIS], &Setpoint[X_AXIS], Kp[X_AXIS], Ki[X_AXIS], Kd[X_AXIS], DIRECT), PID(&Input[Y_AXIS], &Output[Y_AXIS], &Setpoint[Y_AXIS], Kp[Y_AXIS], Ki[Y_AXIS], Kd[Y_AXIS], DIRECT)};
+
+//PID myPID_X(&Input[X_AXIS], &Output[X_AXIS], &Setpoint[X_AXIS], Kp[X_AXIS], Ki[X_AXIS], Kd[X_AXIS], DIRECT);
+//PID myPID_Y(&Input[Y_AXIS], &Output[Y_AXIS], &Setpoint[Y_AXIS], Kp[Y_AXIS], Ki[Y_AXIS], Kd[Y_AXIS], DIRECT);
 
 long debouncing_time = DEBOUNCE_TIME; //Debouncing Time in Milliseconds
 
@@ -93,20 +96,19 @@ void setup() {
   Joystick.setRyAxisRange(0,ADC_SCALE);
   
   pwm.begin();
-  pwm.setPWM(0,0);  
-  pwm.setPWM(1,0);
-  pwm.servo_off(0);
-  pwm.servo_off(1);
+  pwm.setPWM(X_AXIS,0);  
+  pwm.setPWM(Y_AXIS,0);
+  pwm.servo_off(X_AXIS);
+  pwm.servo_off(Y_AXIS);
   
+  for (int i = 0; i < 2; i++)
+  {
+    Input[i] = encoder.axis[i].currentPosition;
+    myPID[i].SetMode(AUTOMATIC);
+    myPID[i].SetSampleTime(PID_SAMPLE_TIME);
+    myPID[i].SetOutputLimits(-PID_OUTPUT_LIMIT, PID_OUTPUT_LIMIT);
+  }
   
-  Input[0] = encoder.axis[0].currentPosition;
-  Input[1] = encoder.axis[1].currentPosition;
-  myPID_X.SetMode(AUTOMATIC);
-  myPID_X.SetSampleTime(1);
-  myPID_X.SetOutputLimits(-PID_OUTPUT_LIMIT, PID_OUTPUT_LIMIT);
-  myPID_Y.SetMode(AUTOMATIC);
-  myPID_Y.SetSampleTime(1);
-  myPID_Y.SetOutputLimits(-PID_OUTPUT_LIMIT, PID_OUTPUT_LIMIT);
   Serial.begin(BAUD_RATE);
 
   Joystick.begin(true);
@@ -119,56 +121,56 @@ void loop() {
   if (initialRun == true ) {
 //    position control is not correctly, wheel runs over disired postion serveral times before stop
     
-    findCenter(0);
+    findCenter(X_AXIS);
     delay(1000);
-    findCenter(1);
+    findCenter(Y_AXIS);
     initialRun = false;
   } else
 
   {
-    encoder.updatePosition(0);
+    encoder.updatePosition(X_AXIS);
 
-    if (encoder.axis[0].currentPosition > encoder.axis[0].maxValue) {
-      Joystick.setXAxis(encoder.axis[0].maxValue);
-    } else if (encoder.axis[0].currentPosition < encoder.axis[0].minValue) {
-      Joystick.setXAxis(encoder.axis[0].minValue);
+    if (encoder.axis[X_AXIS].currentPosition > encoder.axis[X_AXIS].maxValue) {
+      Joystick.setXAxis(encoder.axis[X_AXIS].maxValue);
+    } else if (encoder.axis[X_AXIS].currentPosition < encoder.axis[X_AXIS].minValue) {
+      Joystick.setXAxis(encoder.axis[X_AXIS].minValue);
     } else {
-      Joystick.setXAxis(encoder.axis[0].currentPosition);
+      Joystick.setXAxis(encoder.axis[X_AXIS].currentPosition);
     }
 
-    encoder.updatePosition(1);
-    if (encoder.axis[1].currentPosition > encoder.axis[1].maxValue) {
-      Joystick.setYAxis(encoder.axis[1].maxValue);
-    } else if (encoder.axis[1].currentPosition < encoder.axis[1].minValue) {
-      Joystick.setYAxis(encoder.axis[1].minValue);
+    encoder.updatePosition(Y_AXIS);
+    if (encoder.axis[Y_AXIS].currentPosition > encoder.axis[Y_AXIS].maxValue) {
+      Joystick.setYAxis(encoder.axis[Y_AXIS].maxValue);
+    } else if (encoder.axis[Y_AXIS].currentPosition < encoder.axis[Y_AXIS].minValue) {
+      Joystick.setYAxis(encoder.axis[Y_AXIS].minValue);
     } else {
-      Joystick.setYAxis(encoder.axis[1].currentPosition);
+      Joystick.setYAxis(encoder.axis[Y_AXIS].currentPosition);
         
     }
 
 
     SetEffects();
     Joystick.getForce(xy_force);
-    xy_force[0] = constrain(xy_force[0], -255, 255);
-    xy_force[1] = constrain(xy_force[1], -255, 255);
+    xy_force[X_AXIS] = constrain(xy_force[X_AXIS], -255, 255);
+    xy_force[Y_AXIS] = constrain(xy_force[Y_AXIS], -255, 255);
     
-    if (encoder.axis[0].currentPosition >= encoder.axis[0].maxValue) {
-      xy_force[0] = 255;
-    } else if (encoder.axis[0].currentPosition <= encoder.axis[0].minValue) {
-      xy_force[0] = -255;
+    if (encoder.axis[X_AXIS].currentPosition >= encoder.axis[X_AXIS].maxValue) {
+      xy_force[X_AXIS] = 255;
+    } else if (encoder.axis[X_AXIS].currentPosition <= encoder.axis[X_AXIS].minValue) {
+      xy_force[X_AXIS] = -255;
     }
-    if (encoder.axis[1].currentPosition >= encoder.axis[1].maxValue) {
-      xy_force[1] = 255;
-    } else if (encoder.axis[1].currentPosition <= encoder.axis[1].minValue) {
-      xy_force[1] = -255;
+    if (encoder.axis[Y_AXIS].currentPosition >= encoder.axis[Y_AXIS].maxValue) {
+      xy_force[Y_AXIS] = 255;
+    } else if (encoder.axis[Y_AXIS].currentPosition <= encoder.axis[Y_AXIS].minValue) {
+      xy_force[Y_AXIS] = -255;
     }
       
   }
 
-  pwm.setPWM(0,xy_force[0]);
-  CalculateMaxSpeedAndMaxAcceleration(0);
-  pwm.setPWM(1,xy_force[1]);
-  CalculateMaxSpeedAndMaxAcceleration(1);
+  pwm.setPWM(X_AXIS,xy_force[X_AXIS]);
+  CalculateMaxSpeedAndMaxAcceleration(X_AXIS);
+  pwm.setPWM(Y_AXIS,xy_force[Y_AXIS]);
+  CalculateMaxSpeedAndMaxAcceleration(Y_AXIS);
 
   Joystick.setRxAxis(analogRead(ANALOG_RX));
   Joystick.setRyAxis(analogRead(ANALOG_RY));
@@ -187,25 +189,25 @@ void Update_Joystick_Buttons()
 
 void SetEffects()
 {
-effects[0].springPosition = encoder.axis[0].currentPosition;
-effects[1].springPosition = encoder.axis[1].currentPosition;
-effects[0].springMaxPosition = encoder.axis[0].maxValue/2;
-effects[1].springMaxPosition = encoder.axis[1].maxValue/2;
+effects[X_AXIS].springPosition = encoder.axis[X_AXIS].currentPosition;
+effects[Y_AXIS].springPosition = encoder.axis[Y_AXIS].currentPosition;
+effects[X_AXIS].springMaxPosition = encoder.axis[X_AXIS].maxValue/2;
+effects[Y_AXIS].springMaxPosition = encoder.axis[Y_AXIS].maxValue/2;
 
-effects[0].frictionPositionChange = encoder.axis[0].positionChange; //lastX - posX;
-effects[1].frictionPositionChange = encoder.axis[1].positionChange; //lastY - posY;
-effects[0].frictionMaxPositionChange = encoder.axis[0].maxPositionChange;
-effects[1].frictionMaxPositionChange = encoder.axis[1].maxPositionChange;
+effects[X_AXIS].frictionPositionChange = encoder.axis[X_AXIS].positionChange; //lastX - posX;
+effects[Y_AXIS].frictionPositionChange = encoder.axis[Y_AXIS].positionChange; //lastY - posY;
+effects[X_AXIS].frictionMaxPositionChange = encoder.axis[X_AXIS].maxPositionChange;
+effects[Y_AXIS].frictionMaxPositionChange = encoder.axis[Y_AXIS].maxPositionChange;
 
-effects[0].inertiaAcceleration = encoder.axis[0].currentPosition;;
-effects[1].inertiaAcceleration = encoder.axis[1].currentPosition;;
-effects[0].inertiaMaxAcceleration = encoder.axis[0].maxAcceleration;
-effects[1].inertiaMaxAcceleration = encoder.axis[1].maxAcceleration;
+effects[X_AXIS].inertiaAcceleration = encoder.axis[X_AXIS].currentPosition;;
+effects[Y_AXIS].inertiaAcceleration = encoder.axis[Y_AXIS].currentPosition;;
+effects[X_AXIS].inertiaMaxAcceleration = encoder.axis[X_AXIS].maxAcceleration;
+effects[Y_AXIS].inertiaMaxAcceleration = encoder.axis[Y_AXIS].maxAcceleration;
 
-effects[0].damperVelocity=encoder.axis[0].currentVelocity;
-effects[1].damperVelocity=encoder.axis[1].currentVelocity;
-effects[0].damperMaxVelocity = encoder.axis[0].maxVelocity;
-effects[1].damperMaxVelocity = encoder.axis[1].maxVelocity;
+effects[X_AXIS].damperVelocity=encoder.axis[X_AXIS].currentVelocity;
+effects[Y_AXIS].damperVelocity=encoder.axis[Y_AXIS].currentVelocity;
+effects[X_AXIS].damperMaxVelocity = encoder.axis[X_AXIS].maxVelocity;
+effects[Y_AXIS].damperMaxVelocity = encoder.axis[Y_AXIS].maxVelocity;
 
 Joystick.setEffectParams(effects);
 
@@ -214,32 +216,32 @@ Joystick.setEffectParams(effects);
 void YokeSetGains()
 {
 //set x axis gains
-gain[0].totalGain = TOTALGAIN_X;
-gain[0].constantGain = 100;
-gain[0].rampGain = 100;
-gain[0].squareGain = 100;
-gain[0].sineGain = 100;
-gain[0].triangleGain = 100;
-gain[0].sawtoothdownGain = 100;
-gain[0].sawtoothupGain = 100;
-gain[0].springGain = 100;
-gain[0].damperGain = 100;
-gain[0].inertiaGain = 100;
-gain[0].frictionGain = 100;
+gain[X_AXIS].totalGain = TOTALGAIN_X;
+gain[X_AXIS].constantGain = 100;
+gain[X_AXIS].rampGain = 100;
+gain[X_AXIS].squareGain = 100;
+gain[X_AXIS].sineGain = 100;
+gain[X_AXIS].triangleGain = 100;
+gain[X_AXIS].sawtoothdownGain = 100;
+gain[X_AXIS].sawtoothupGain = 100;
+gain[X_AXIS].springGain = 100;
+gain[X_AXIS].damperGain = 100;
+gain[X_AXIS].inertiaGain = 100;
+gain[X_AXIS].frictionGain = 100;
 
 //set y axis gains
-gain[1].totalGain = TOTALGAIN_Y;
-gain[1].constantGain = 100;
-gain[1].rampGain = 100;
-gain[1].squareGain = 100;
-gain[1].sineGain = 100;
-gain[1].triangleGain = 100;
-gain[1].sawtoothdownGain = 100;
-gain[1].sawtoothupGain = 100;
-gain[1].springGain = 100;
-gain[1].damperGain = 100;
-gain[1].inertiaGain = 100;
-gain[1].frictionGain = 100;
+gain[Y_AXIS].totalGain = TOTALGAIN_Y;
+gain[Y_AXIS].constantGain = 100;
+gain[Y_AXIS].rampGain = 100;
+gain[Y_AXIS].squareGain = 100;
+gain[Y_AXIS].sineGain = 100;
+gain[Y_AXIS].triangleGain = 100;
+gain[Y_AXIS].sawtoothdownGain = 100;
+gain[Y_AXIS].sawtoothupGain = 100;
+gain[Y_AXIS].springGain = 100;
+gain[Y_AXIS].damperGain = 100;
+gain[Y_AXIS].inertiaGain = 100;
+gain[Y_AXIS].frictionGain = 100;
 
 Joystick.setGains(gain);
 
@@ -307,13 +309,14 @@ void findCenter(int idx)
 
   pwm.servo_on(idx);
    delay(2000);
-  Serial.println("Move Axis to Min and Max. Press Button to Finish.");
+  //Serial.println("Move Axis to Min and Max. Press Button to Finish.");
   while (Buttons[0].CurrentState)
   {
     encoder.updatePosition(idx);
     if(LastPos != encoder.axis[idx].currentPosition)
     {
     AutoCalibration(idx);
+    LastPos = encoder.axis[idx].currentPosition;
     sprintf(buff,"Axis[%d]: %ld,%ld", idx, encoder.axis[idx].minValue, encoder.axis[idx].maxValue);
     Serial.println(buff);
     }
@@ -339,8 +342,7 @@ void findCenter(int idx)
     default:
       break;
     }
-   
-   
+
     pwm.setPWM(idx, 0);
 }
 
@@ -352,18 +354,7 @@ void gotoPosition(int idx, int32_t targetPosition) {
     Setpoint[idx] = targetPosition;
     encoder.updatePosition(idx);
     Input[idx] = encoder.axis[idx].currentPosition ;
-    switch (idx)
-    {
-    case 0:
-     myPID_X.Compute();
-    break;
-    case 1:
-     myPID_Y.Compute();
-    break;
-     default:
-      break;
-    }
-   
+    myPID[idx].Compute();
     pwm.setPWM(idx, -Output[idx]);
     CalculateMaxSpeedAndMaxAcceleration(idx);
     sprintf(buff,"Axis[%d] Possition: %ld : Target: %ld : Force: %d",idx,encoder.axis[idx].currentPosition, (int32_t)Setpoint[idx], (int)Output[idx] );

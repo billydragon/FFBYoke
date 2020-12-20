@@ -66,11 +66,11 @@ void Due_QDEC::activateCNT_TC2() // Y Axis
 
 void Due_QDEC::setConfig(YokeConfig YokeConfig) {
   
-  axis[0].maxValue = MAX_X_VALUE;
-  axis[0].minValue =  - axis[0].maxValue;
+  axis[X_AXIS].maxValue = MAX_X_VALUE;
+  axis[X_AXIS].minValue =  - axis[X_AXIS].maxValue;
 
-  axis[1].maxValue = MAX_Y_VALUE ;
-  axis[1].minValue =  -axis[1].maxValue;
+  axis[Y_AXIS].maxValue = MAX_Y_VALUE ;
+  axis[Y_AXIS].minValue =  -axis[Y_AXIS].maxValue;
   
   initVariables();
 }
@@ -91,8 +91,8 @@ void Due_QDEC::initVariables() {
 
 void  Due_QDEC::updatePosition(int idx) {
 
-      axis[0].currentPosition = REG_TC0_CV0; 
-      axis[1].currentPosition = REG_TC2_CV0;
+      axis[X_AXIS].currentPosition = REG_TC0_CV0; 
+      axis[Y_AXIS].currentPosition = REG_TC2_CV0;
 
         axis[idx].positionChange = axis[idx].currentPosition - axis[idx].lastPosition;
         uint32_t currentEncoderTime = (int32_t) millis();

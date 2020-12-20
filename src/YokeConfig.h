@@ -9,6 +9,8 @@
 #define TOTALGAIN_X         100
 #define TOTALGAIN_Y         100
 
+#define X_AXIS              0
+#define Y_AXIS              1
 #ifdef _VARIANT_ARDUINO_DUE_X_
 
 #define encoderPin_XA       2
@@ -56,6 +58,7 @@
 #define DEBOUNCE_TIME       50
 
 #define PID_OUTPUT_LIMIT    255
+#define PID_SAMPLE_TIME     0.01
 #define KP      0.1
 #define KI      30
 #define KD      0.01
