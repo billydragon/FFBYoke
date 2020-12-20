@@ -55,7 +55,7 @@
 #define ANALOG_RY           A1
 #define DEBOUNCE_TIME       50
 
-#define PID_OUTPUT_LIMIT    80
+#define PID_OUTPUT_LIMIT    255
 #define KP      2
 #define KI      0.5
 #define KD      0.05
