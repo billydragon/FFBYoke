@@ -119,7 +119,7 @@ void loop() {
     
     findCenter(0);
     delay(1000);
-    //findCenter(1);
+    findCenter(1);
     initialRun = false;
   } else
 
@@ -163,7 +163,7 @@ void loop() {
       
   }
 
-  pwm.setPWM(0, xy_force[0]);
+  pwm.setPWM(0,xy_force[0]);
   pwm.setPWM(1,xy_force[1]);
   Joystick.setRxAxis(analogRead(ANALOG_RX));
   Joystick.setRyAxis(analogRead(ANALOG_RY));
@@ -296,8 +296,11 @@ void findCenter(int idx)
  
   encoder.axis[idx].minValue =0;
   encoder.axis[idx].maxValue =0;
-    Reset_Encoder(idx);
+  Reset_Encoder(idx);
 
+  pwm.servo_on(idx);
+   delay(2000);
+  Serial.println("Move Axis to Min and Max. Press Button to Finish.");
   while (Buttons[0].CurrentState)
   {
     encoder.updatePosition(idx);
@@ -310,11 +313,8 @@ void findCenter(int idx)
   }
     Axis_Center= (encoder.axis[idx].minValue + encoder.axis[idx].maxValue)/2;
     Axis_Range =  abs(encoder.axis[idx].minValue) + abs(encoder.axis[idx].maxValue);
-    encoder.axis[idx].maxValue = Axis_Range/2 -50;
+    encoder.axis[idx].maxValue = Axis_Range/2 -20;
     encoder.axis[idx].minValue = -encoder.axis[idx].maxValue;
-    Joystick.setXAxisRange(encoder.axis[idx].minValue, encoder.axis[idx].maxValue);
-    pwm.servo_on(idx);
-    delay(2000);
     gotoPosition(idx, Axis_Center);    //goto center X
     Reset_Encoder(idx);
     sprintf(buff,"Set Axis[%d]: %ld - 0 - %ld", idx, encoder.axis[idx].minValue, encoder.axis[idx].maxValue);
@@ -322,16 +322,18 @@ void findCenter(int idx)
     switch (idx)
     {
     case 0:
+      Joystick.setXAxisRange(encoder.axis[idx].minValue, encoder.axis[idx].maxValue);
       Joystick.setXAxis(encoder.axis[idx].currentPosition);
       break;
     case 1:
+      Joystick.setYAxisRange(encoder.axis[idx].minValue, encoder.axis[idx].maxValue);
       Joystick.setYAxis(encoder.axis[idx].currentPosition);
       break;
     default:
       break;
     }
    
-    delay(100);
+   
     pwm.setPWM(idx, 0);
 }
 
@@ -343,7 +345,18 @@ void gotoPosition(int idx, int32_t targetPosition) {
     Setpoint[idx] = targetPosition;
     encoder.updatePosition(idx);
     Input[idx] = encoder.axis[idx].currentPosition ;
-    myPID_X.Compute();
+    switch (idx)
+    {
+    case 0:
+     myPID_X.Compute();
+    break;
+    case 1:
+     myPID_Y.Compute();
+    break;
+     default:
+      break;
+    }
+   
     pwm.setPWM(idx, -Output[idx]);
     CalculateMaxSpeedAndMaxAcceleration(idx);
     sprintf(buff,"Axis[%d] Possition: %ld : Target: %ld : Force: %d",idx,encoder.axis[idx].currentPosition, (int32_t)Setpoint[idx], (int)Output[idx] );

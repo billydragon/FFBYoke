@@ -35,10 +35,11 @@ void _Pwm::begin(){
  
 void _Pwm::setPWM(int idx, int16_t force) {
 	int nomalizedForce=0;
-	int dir=0, pin=0;
+	
 	//int nomalizedForce = map (force, -255,255, MINFORCE, MAXFORCE); 
 
 	#ifdef _VARIANT_ARDUINO_DUE_X_
+	int dir=0, pin=0;
 	nomalizedForce = map (force, -255,255,0,DAC_SCALE); 
 	if(idx == 0)
 	{
@@ -65,15 +66,15 @@ void _Pwm::setPWM(int idx, int16_t force) {
 		}
 		
 	#else
-	nomalizedForce = map (force, -255,255,0,MAXFORCE);// MINFORCE, MAXFORCE); 
+	nomalizedForce = map (force, -255,255,0,MAXFORCE);
 	if(idx == 0)
 	{
 		
-		OCR1A = nomalizedForce;
+		OCR1A = abs(nomalizedForce);
 	}
 	else if (idx == 1)
 	{
-		OCR1B = nomalizedForce;
+		OCR1B = abs(nomalizedForce);
 		
 	}
 	

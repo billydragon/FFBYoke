@@ -4,10 +4,10 @@
 
 #define BAUD_RATE 115200
 
-#define MAX_X_VALUE         4000
-#define MAX_Y_VALUE         3000
-#define TOTALGAIN_X         80
-#define TOTALGAIN_Y         80
+#define MAX_X_VALUE         3000
+#define MAX_Y_VALUE         2000
+#define TOTALGAIN_X         100
+#define TOTALGAIN_Y         100
 
 #ifdef _VARIANT_ARDUINO_DUE_X_
 
@@ -35,10 +35,10 @@
 #define encoderPin_YB       3
 
 
-#define LIMIT_SWITCH        7
+#define PUSH_BUTTON_01        7
 
-#define PWM_X  OCR1A
-#define PWM_Y  OCR1B
+#define PWM_X  9
+#define PWM_Y  10
 #define PWM_FREQ 20000.0f
 #define MAXFORCE (F_CPU/(PWM_FREQ*2)) //16000000 is system clock of Leonardo
 #define MINFORCE (-MAXFORCE)
@@ -55,10 +55,10 @@
 #define ANALOG_RY           A1
 #define DEBOUNCE_TIME       50
 
-#define PID_OUTPUT_LIMIT    200
+#define PID_OUTPUT_LIMIT    80
 #define KP      2
-#define KI      1
-#define KD      0.01
+#define KI      0.5
+#define KD      0.05
 
 struct Axis{
     uint32_t cPR;
