@@ -40,7 +40,7 @@ void _Pwm::setPWM(int idx, int16_t force) {
 
 	#ifdef _VARIANT_ARDUINO_DUE_X_
 	int dir=0, pin=0;
-	nomalizedForce = map (force, -255,255,0,DAC_SCALE); 
+	nomalizedForce = map (force, -255,255,0,DUE_DAC_SCALE); 
 	if(idx == 0)
 	{
 		dir = Dir_X;
