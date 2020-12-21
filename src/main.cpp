@@ -8,6 +8,14 @@
 #include "PWM.h"
 
 #ifdef _VARIANT_ARDUINO_DUE_X_
+#if !defined(SERIAL_RX1_BUFFER_SIZE)
+  #define SERIAL_RX1_BUFFER_SIZE 128
+#endif
+
+#if !defined(SERIAL_TX1_BUFFER_SIZE)
+  #define SERIAL_TX1_BUFFER_SIZE 128
+#endif
+
 #define Serial  SerialUSB
 #include "Due_QDEC.h"
 
