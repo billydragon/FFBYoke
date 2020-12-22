@@ -28,8 +28,8 @@ void _Pwm::begin(){
     OCR1B = 0;   
 	#endif
 
-	setPWM(X_AXIS,0);
-    setPWM(Y_AXIS,0);
+	setPWM(0,0);
+    setPWM(1,0);
 
 }
  
@@ -67,44 +67,40 @@ void _Pwm::setPWM(int idx, int16_t force) {
 		
 	#else
 	nomalizedForce = map (force, -255,255,0,MAXFORCE);
-	if(idx == X_AXIS)
+	if(idx == 0)
 	{
+		
 		OCR1A = abs(nomalizedForce);
-	}	
-	else if(idx == Y_AXIS)
+	}
+	else if (idx == 1)
 	{
 		OCR1B = abs(nomalizedForce);
+		
 	}
-		
-		
+	
 	#endif
 	
  }
  
  void _Pwm::servo_on(int idx)
 {
-	if(idx == X_AXIS)
-	{
+	if(idx == 0)
+	{ 
 		digitalWriteFast(SERVO_ON_X,HIGH);
-	}	
-	else if(idx == Y_AXIS)
-	{
-		digitalWriteFast(SERVO_ON_Y,HIGH);
 	}
-		
+	
+	else
+	digitalWriteFast(SERVO_ON_Y,HIGH);
 }
 
 
 void _Pwm::servo_off(int idx)
 {
-	if(idx == X_AXIS)
-	{
+	if(idx == 0)
+	{ 
 		digitalWriteFast(SERVO_ON_X,LOW);
-	}		
-	else if(idx == Y_AXIS)
-	{
-		digitalWriteFast(SERVO_ON_Y,LOW);
 	}
-		
+	else
+	digitalWriteFast(SERVO_ON_Y,LOW);
 }
 
