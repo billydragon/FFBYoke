@@ -2,6 +2,8 @@
 #define YOKECONFIG_h
 #include <Arduino.h>
 
+#define USING_DAC 1
+
 #define BAUD_RATE 115200
 
 #define MAX_X_VALUE         3000

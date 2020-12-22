@@ -4,8 +4,14 @@
 #include "YokeConfig.h"
 
 #include "PID_V2.h"
-//#include "DAC8562.h"
+
+#if USING_DAC
+#include "DAC.h"
+DAC pwm;
+#else
 #include "PWM.h"
+_Pwm pwm;
+#endif
 
 #ifdef _VARIANT_ARDUINO_DUE_X_
 #if !defined(SERIAL_RX1_BUFFER_SIZE)
@@ -26,7 +32,7 @@ QEncoder encoder;
 #endif
 
 
-_Pwm pwm;
+
 YokeConfig yokeConfig;
 
 int32_t xy_force[2] = {0,0};
@@ -131,7 +137,7 @@ void loop() {
     
     findCenter(X_AXIS);
     delay(1000);
-    findCenter(Y_AXIS);
+    //findCenter(Y_AXIS);
     initialRun = false;
   } else
 
