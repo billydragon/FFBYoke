@@ -3,6 +3,7 @@
 #include <Arduino.h>
 
 #define USING_DAC 1
+#define CS_PIN            10    //DEFAULT SS pin for SPI
 
 #define BAUD_RATE 115200
 

@@ -20,12 +20,19 @@
   2018-07-24 @km7,  (cc) https://creativecommons.org/licenses/by/3.0/
 */
 
-#ifndef __DAC8562_DUE_H__
-#define __DAC8562_DUE_H__
+#ifndef __DAC8563_H__
+#define __DAC8563_H__
 
 #include "Arduino.h"
 #include <SPI.h>
-#define SS                        10    //DEFAULT SS pin for SPI
+#include "YokeConfig.h"
+
+
+
+#define DEFAULT_VREF      3.3383
+#define DAC_MIN           512 
+#define DAC_MAX           65024
+
 
 #define CMD_SETA_UPDATEA          0x18  // 
 #define CMD_SETB_UPDATEB          0x19  // 
@@ -50,25 +57,31 @@
 #define CMD_INTERNAL_REF_EN       0x38  // Enable Internal Reference & reset DACs to gain = 2
 #define DATA_INTERNAL_REF_EN      0x0001  // Enable Internal Reference & reset DACs to gain = 2
 
-class DAC8562
+class DAC8563
 {
   private:
     uint8_t _cs_pin;
     float   _vref;
-    
+
   public:
-    DAC8562();
-    DAC8562(uint8_t cs_pin);
-    DAC8562(uint8_t cs_pin, float vref);
+    DAC8563();
+    DAC8563(uint8_t cs_pin);
+    DAC8563(uint8_t cs_pin, float vref);
     void begin();
-    void initialize();
-    void DAC_WR_REG(uint8_t cmd_byte, uint16_t data_byte );
+    void setPWM(int idx, int16_t val);
+    void servo_on(int idx);
+    void servo_off(int idx);
     void outPutValue(uint8_t cmd_byte,uint16_t input);
     void writeValue( uint8_t cmd_byte, uint8_t mid, uint8_t last);
     void writeVoltage(float input);
     void writeA(float input);
     void writeB(float input);
+    
+    private:
+    void initialize();
+    void DAC_WR_REG(uint8_t cmd_byte, uint16_t data_byte );
     uint16_t Voltage_Convert(float voltage);
+
 };
 
 #endif

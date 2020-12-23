@@ -6,8 +6,8 @@
 #include "PID_V2.h"
 
 #if USING_DAC
-#include "DAC.h"
-DAC pwm;
+#include "DAC8563.h"
+DAC8563 pwm(CS_PIN);
 #else
 #include "PWM.h"
 _Pwm pwm;
@@ -30,8 +30,6 @@ Due_QDEC encoder;
 #include "QEncoder.h"
 QEncoder encoder; 
 #endif
-
-
 
 YokeConfig yokeConfig;
 
@@ -127,7 +125,6 @@ void setup() {
 
   Joystick.begin(true);
   YokeSetGains();
-  
   
 }
 
