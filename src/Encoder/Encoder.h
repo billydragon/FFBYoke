@@ -38,6 +38,9 @@
 #include "pins_arduino.h"
 #endif
 
+#define ENCODER_OPTIMIZE_INTERRUPTS
+#define ENCODER_USE_INTERRUPTS
+
 #include "utility/direct_pin_read.h"
 
 #if defined(ENCODER_USE_INTERRUPTS) || !defined(ENCODER_DO_NOT_USE_INTERRUPTS)
