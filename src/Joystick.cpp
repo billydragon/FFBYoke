@@ -20,6 +20,7 @@
 
 #include "Joystick.h"
 #include "FFBDescriptor.h"
+#include "filters/filters.h"
 #if defined(_USING_DYNAMIC_HID)
 
 #define JOYSTICK_REPORT_ID_INDEX 7
@@ -40,6 +41,13 @@
 #define JOYSTICK_INCLUDE_ACCELERATOR B00000100
 #define JOYSTICK_INCLUDE_BRAKE       B00001000
 #define JOYSTICK_INCLUDE_STEERING    B00010000
+
+const float cutoff_freq_damper   = 5.0;  //Cutoff frequency in Hz
+const float sampling_time_damper = 0.001; //Sampling time in seconds.
+IIR::ORDER  order  = IIR::ORDER::OD1; // Order (OD1 to OD4)
+Filter damperFilter(cutoff_freq_damper, sampling_time_damper, order);
+Filter interiaFilter(cutoff_freq_damper, sampling_time_damper, order);
+Filter frictionFilter(cutoff_freq_damper, sampling_time_damper, order);
 
 Joystick_::Joystick_(
 	uint8_t hidReportId,
@@ -730,13 +738,13 @@ int32_t Joystick_::ConditionForceCalculator(volatile TEffectState& effect, float
 	tempForce = -tempForce * effect.gain / 255;
 	switch (effect.effectType) {
 	case  USB_EFFECT_DAMPER:
-		//tempForce = damperFilter.filterIn(tempForce);
+		tempForce = damperFilter.filterIn(tempForce);
 		break;
 	case USB_EFFECT_INERTIA:
-		//tempForce = interiaFilter.filterIn(tempForce);
+		tempForce = interiaFilter.filterIn(tempForce);
 		break;
 	case USB_EFFECT_FRICTION:
-		//tempForce = frictionFilter.filterIn(tempForce);
+		tempForce = frictionFilter.filterIn(tempForce);
 		break;
 	default:
 		break;

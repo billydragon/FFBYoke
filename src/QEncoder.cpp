@@ -1,5 +1,5 @@
 #include "QEncoder.h"
-#include "Encoder/Encoder.h"
+#include "Encoder.h"
 
 Encoder Enc[]= {Encoder(encoderPin_XA, encoderPin_XB), Encoder(encoderPin_YA, encoderPin_YB)};
 

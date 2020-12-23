@@ -5,9 +5,12 @@
 
 #include "PID_V2.h"
 
-#if USING_DAC
+
+//#define USING_DAC
+
+#ifdef USING_DAC
 #include "DAC8563.h"
-DAC8563 pwm(CS_PIN);
+DAC8563 pwm=DAC8563(CS_PIN);
 #else
 #include "PWM.h"
 _Pwm pwm;
@@ -33,36 +36,38 @@ QEncoder encoder;
 
 YokeConfig yokeConfig;
 
-int32_t xy_force[2] = {0,0};
-int32_t last_xy_force[2] = {0,0};
+volatile uint8_t cs_pin = CS_PIN;
+
+ int32_t xy_force[2] = {0,0};
+ int32_t last_xy_force[2] = {0,0};
 
 double Setpoint[2], Input[2], Output[2];
 //double Kp=2, Ki=5, Kd=1;
 //double aggKp=4, aggKi=0.2, aggKd=1;
-double Kp[2] = {KP,KP};
-double Ki[2] = {KI,KI};
-double Kd[2] = {KD,KD};
+ double Kp[2] = {KP,KP};
+ double Ki[2] = {KI,KI};
+ double Kd[2] = {KD,KD};
 
-PID myPID[] = {PID(&Input[X_AXIS], &Output[X_AXIS], &Setpoint[X_AXIS], Kp[X_AXIS], Ki[X_AXIS], Kd[X_AXIS], DIRECT), PID(&Input[Y_AXIS], &Output[Y_AXIS], &Setpoint[Y_AXIS], Kp[Y_AXIS], Ki[Y_AXIS], Kd[Y_AXIS], DIRECT)};
+PID myPID[]={PID(&Input[X_AXIS], &Output[X_AXIS], &Setpoint[X_AXIS], Kp[X_AXIS], Ki[X_AXIS], Kd[X_AXIS], DIRECT), PID(&Input[Y_AXIS], &Output[Y_AXIS], &Setpoint[Y_AXIS], Kp[Y_AXIS], Ki[Y_AXIS], Kd[Y_AXIS], DIRECT)};
 
 //PID myPID_X(&Input[X_AXIS], &Output[X_AXIS], &Setpoint[X_AXIS], Kp[X_AXIS], Ki[X_AXIS], Kd[X_AXIS], DIRECT);
 //PID myPID_Y(&Input[Y_AXIS], &Output[Y_AXIS], &Setpoint[Y_AXIS], Kp[Y_AXIS], Ki[Y_AXIS], Kd[Y_AXIS], DIRECT);
 
-long debouncing_time = DEBOUNCE_TIME; //Debouncing Time in Milliseconds
+volatile long debouncing_time = DEBOUNCE_TIME; //Debouncing Time in Milliseconds
 
-bool initialRun = true;
+volatile bool initialRun = true;
 
 Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID,JOYSTICK_TYPE_JOYSTICK,
-8, 0, // Button Count, Hat Switch Count
+1, 0, // Button Count, Hat Switch Count
 true, true, false, // X and Y, but no Z Axis
-true, true, false, // No Rx, Ry, or Rz
+false, false, false, // No Rx, Ry, or Rz
 false, false, // No rudder or throttle
 false, false, false); // No accelerator, brake, or steering
 
-BUTTONS Buttons[8]; 
+BUTTONS Buttons; 
 
-Gains gain[2];
-EffectParams effects[2];
+ Gains gain[2];
+ EffectParams effects[2];
 
 void calculateEncoderPostion(int idx);
 void YokeSetGains();
@@ -82,13 +87,14 @@ void setup() {
   
   pinMode(ANALOG_RX,INPUT);
   pinMode(ANALOG_RY,INPUT);
-  Buttons[0].pinNumber = PUSH_BUTTON_01;
-  Buttons[0].CurrentState = HIGH;
-  Buttons[0].LastState = HIGH;
-  Buttons[0].millis_time = millis();
-  pinMode(Buttons[0].pinNumber,INPUT_PULLUP);
+  
+  Buttons.pinNumber = PUSH_BUTTON_01;
+  Buttons.CurrentState = HIGH;
+  Buttons.LastState = HIGH;
+  Buttons.millis_time = millis();
+  pinMode(Buttons.pinNumber,INPUT_PULLUP);
 
-  attachInterrupt(digitalPinToInterrupt(Buttons[0].pinNumber), Push_Button_01_ISR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(Buttons.pinNumber), Push_Button_01_ISR, CHANGE);
 
 
   #ifdef _VARIANT_ARDUINO_DUE_X_
@@ -106,8 +112,9 @@ void setup() {
   //encoder.setConfig(yokeConfig);
   Joystick.setRxAxisRange(0,ADC_SCALE);
   Joystick.setRyAxisRange(0,ADC_SCALE);
-  
+  delay(200);
   pwm.begin();
+  delay(200);
   pwm.setPWM(X_AXIS,0);  
   pwm.setPWM(Y_AXIS,0);
   pwm.servo_off(X_AXIS);
@@ -193,7 +200,7 @@ void loop() {
 void Update_Joystick_Buttons()
 {
 
-      Joystick.setButton(0, !Buttons[0].CurrentState);
+      Joystick.setButton(0, !Buttons.CurrentState);
      
 
 }
@@ -271,14 +278,14 @@ void calculateEncoderPostion_Y() {
 */
 void Push_Button_01_ISR()
 {
-  int bState = digitalReadFast(Buttons[0].pinNumber);
-  if(Buttons[0].LastState != bState )
+  int bState = digitalReadFast(Buttons.pinNumber);
+  if(Buttons.LastState != bState )
   {
-     if((long)(millis() - Buttons[0].millis_time) > debouncing_time ) {
+     if((long)(millis() - Buttons.millis_time) > debouncing_time ) {
 
-        Buttons[0].CurrentState = bState;
-        Buttons[0].LastState = Buttons[0].CurrentState; 
-        Buttons[0].millis_time = millis();
+        Buttons.CurrentState = bState;
+        Buttons.LastState = Buttons.CurrentState; 
+        Buttons.millis_time = millis();
     }
   }
       
@@ -321,7 +328,7 @@ void findCenter(int idx)
   pwm.servo_on(idx);
    delay(2000);
   //Serial.println("Move Axis to Min and Max. Press Button to Finish.");
-  while (Buttons[0].CurrentState)
+  while (Buttons.CurrentState)
   {
     encoder.updatePosition(idx);
     if(LastPos != encoder.axis[idx].currentPosition)

@@ -2,8 +2,7 @@
 #define YOKECONFIG_h
 #include <Arduino.h>
 
-#define USING_DAC 1
-#define CS_PIN            10    //DEFAULT SS pin for SPI
+#define CS_PIN            52    // SS pin for SPI
 
 #define BAUD_RATE 115200
 
@@ -60,13 +59,13 @@
 #define ANALOG_RY           A1
 #define DEBOUNCE_TIME       50
 
-#define PID_OUTPUT_LIMIT    255
-#define PID_SAMPLE_TIME     0.01
-#define KP      0.1
-#define KI      30
+#define PID_OUTPUT_LIMIT    127
+#define PID_SAMPLE_TIME     1
+#define KP      0.5
+#define KI      1
 #define KD      0.01
 
-struct Axis{
+ struct Axis{
     uint32_t cPR;
     uint16_t maxAngle;
     int32_t maxValue;

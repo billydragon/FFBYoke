@@ -21,12 +21,13 @@ DAC8563::DAC8563(uint8_t cs_pin)
   _vref= DEFAULT_VREF; //My Board using vref 3.3V
 };
 
+/*
 DAC8563::DAC8563( uint8_t cs_pin, float vref)
 {
   _cs_pin = cs_pin;
   _vref=vref;
 };
-
+*/
 void DAC8563::begin()
 {
   pinMode(SERVO_ON_X,OUTPUT);
@@ -45,11 +46,16 @@ void DAC8563::begin()
   SPI.setBitOrder(MSBFIRST);
   #endif
   initialize();
+
+  //Debug
+ // SerialUSB.println("Init SPI Done.");
+  //delay(1000);
 };
 
-void DAC8563::setPWM(int idx, int16_t force)
+void DAC8563::setPWM(int idx, int32_t force)
  {
-        int16_t DACValue = map(force,-255,255,DAC_MAX,DAC_MIN); 
+        //char buff[64];
+        uint16_t DACValue = map(force,-255,255,DAC_MAX,DAC_MIN); 
          switch (idx)
          {
          case X_AXIS:
@@ -61,6 +67,9 @@ void DAC8563::setPWM(int idx, int16_t force)
          default:
                  break;
          }
+
+        // sprintf(buff,"setPWM(%d): %d",idx, DACValue);
+        // SerialUSB.println(buff);
  }
 
  void DAC8563::servo_on(int idx)
@@ -87,6 +96,7 @@ void DAC8563::servo_off(int idx)
 
 
 void DAC8563::DAC_WR_REG(uint8_t cmd_byte, uint16_t data_byte) {
+  
   #ifdef _VARIANT_ARDUINO_DUE_X_
   SPI.transfer(_cs_pin,cmd_byte,SPI_CONTINUE);
   SPI.transfer16(_cs_pin,data_byte);
@@ -96,6 +106,7 @@ void DAC8563::DAC_WR_REG(uint8_t cmd_byte, uint16_t data_byte) {
   SPI.transfer16(data_byte);
   digitalWriteFast(_cs_pin, HIGH);
   #endif
+ 
 };
 
 
@@ -120,6 +131,7 @@ void DAC8563::writeB(float input) {
 };
 
 void DAC8563::writeValue(uint8_t cmd_byte, uint8_t mid, uint8_t last) {
+ 
   #ifdef _VARIANT_ARDUINO_DUE_X_
   SPI.transfer(_cs_pin,cmd_byte,SPI_CONTINUE);
   SPI.transfer(_cs_pin,last,SPI_CONTINUE);
@@ -131,6 +143,7 @@ void DAC8563::writeValue(uint8_t cmd_byte, uint8_t mid, uint8_t last) {
   SPI.transfer(mid);
   digitalWriteFast(_cs_pin, HIGH);
   #endif
+  
 };
 
 void DAC8563::initialize() {

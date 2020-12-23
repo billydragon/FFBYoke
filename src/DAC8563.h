@@ -66,9 +66,9 @@ class DAC8563
   public:
     DAC8563();
     DAC8563(uint8_t cs_pin);
-    DAC8563(uint8_t cs_pin, float vref);
+    //DAC8563(uint8_t cs_pin, float vref);
     void begin();
-    void setPWM(int idx, int16_t val);
+    void setPWM(int idx, int32_t val);
     void servo_on(int idx);
     void servo_off(int idx);
     void outPutValue(uint8_t cmd_byte,uint16_t input);
@@ -76,8 +76,7 @@ class DAC8563
     void writeVoltage(float input);
     void writeA(float input);
     void writeB(float input);
-    
-    private:
+
     void initialize();
     void DAC_WR_REG(uint8_t cmd_byte, uint16_t data_byte );
     uint16_t Voltage_Convert(float voltage);
