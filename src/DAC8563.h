@@ -30,8 +30,8 @@
 
 
 #define DEFAULT_VREF      3.3383
-#define DAC_MIN           512 
-#define DAC_MAX           65024
+#define DAC856X_MIN           512 
+#define DAC856X_MAX           65024
 
 
 #define CMD_SETA_UPDATEA          0x18  // 
@@ -73,9 +73,7 @@ class DAC8563
     void servo_off(int idx);
     void outPutValue(uint8_t cmd_byte,uint16_t input);
     void writeValue( uint8_t cmd_byte, uint8_t mid, uint8_t last);
-    void writeVoltage(float input);
-    void writeA(float input);
-    void writeB(float input);
+   
 
     void initialize();
     void DAC_WR_REG(uint8_t cmd_byte, uint16_t data_byte );

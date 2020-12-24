@@ -21,30 +21,17 @@ DAC8563::DAC8563(uint8_t cs_pin)
   _vref= DEFAULT_VREF; //My Board using vref 3.3V
 };
 
-/*
-DAC8563::DAC8563( uint8_t cs_pin, float vref)
-{
-  _cs_pin = cs_pin;
-  _vref=vref;
-};
-*/
 void DAC8563::begin()
 {
   pinMode(SERVO_ON_X,OUTPUT);
 	pinMode(SERVO_ON_Y,OUTPUT);
 
-  #ifdef _VARIANT_ARDUINO_DUE_X_
-  SPI.begin(_cs_pin);
-  SPI.setDataMode(_cs_pin,SPI_MODE1);
-  SPI.setBitOrder(_cs_pin,MSBFIRST);
-  #else
   /* !Chip select (low to enable) */
   pinMode(_cs_pin, OUTPUT);
   digitalWriteFast(_cs_pin, HIGH);
   SPI.begin();
   SPI.setDataMode(SPI_MODE1);
   SPI.setBitOrder(MSBFIRST);
-  #endif
   initialize();
 
   //Debug
@@ -55,7 +42,7 @@ void DAC8563::begin()
 void DAC8563::setPWM(int idx, int32_t force)
  {
         //char buff[64];
-        uint16_t DACValue = map(force,-255,255,DAC_MAX,DAC_MIN); 
+        uint16_t DACValue = map(force,-255,255,DAC856X_MIN,DAC856X_MAX); 
          switch (idx)
          {
          case X_AXIS:
@@ -94,21 +81,14 @@ void DAC8563::servo_off(int idx)
 	digitalWriteFast(SERVO_ON_Y,LOW);
 }
 
-
 void DAC8563::DAC_WR_REG(uint8_t cmd_byte, uint16_t data_byte) {
   
-  #ifdef _VARIANT_ARDUINO_DUE_X_
-  SPI.transfer(_cs_pin,cmd_byte,SPI_CONTINUE);
-  SPI.transfer16(_cs_pin,data_byte);
-  #else
   digitalWriteFast(_cs_pin, LOW);
   SPI.transfer(cmd_byte);
   SPI.transfer16(data_byte);
   digitalWriteFast(_cs_pin, HIGH);
-  #endif
  
 };
-
 
 void DAC8563::outPutValue(uint8_t cmd_byte,uint16_t input) {
   byte inputMid = (input>>8)&0xFF;
@@ -117,32 +97,15 @@ void DAC8563::outPutValue(uint8_t cmd_byte,uint16_t input) {
   writeValue(cmd_byte, (inputLast),(inputMid));
 };
 
-void DAC8563::writeVoltage(float input) {
-  writeA(input);
-  writeB(input);
-};
-
-void DAC8563::writeA(float input) {
- outPutValue(CMD_SETA_UPDATEA,Voltage_Convert(input/_vref*5));
-};
-
-void DAC8563::writeB(float input) {
- outPutValue(CMD_SETB_UPDATEB,Voltage_Convert(input/_vref*5));
-};
 
 void DAC8563::writeValue(uint8_t cmd_byte, uint8_t mid, uint8_t last) {
  
-  #ifdef _VARIANT_ARDUINO_DUE_X_
-  SPI.transfer(_cs_pin,cmd_byte,SPI_CONTINUE);
-  SPI.transfer(_cs_pin,last,SPI_CONTINUE);
-  SPI.transfer(_cs_pin,mid);
-  #else
+ 
   digitalWriteFast(_cs_pin, LOW);
   SPI.transfer(cmd_byte);
   SPI.transfer(last);
   SPI.transfer(mid);
   digitalWriteFast(_cs_pin, HIGH);
-  #endif
   
 };
 
@@ -154,18 +117,3 @@ void DAC8563::initialize() {
   DAC_WR_REG(CMD_LDAC_DIS, DATA_LDAC_DIS);          // update the caches
 };
 
-uint16_t DAC8563::Voltage_Convert(float voltage)
-{
-  uint16_t _D_;
-  
-  voltage = voltage / 6  + 2.5;   //based on the manual provided by texas instruments
-
-  _D_ = (uint16_t)(65536 * voltage / 5);
-
-  if(_D_ < 32768)
-  {
-    _D_ -= 100;     //fix the errors
-  }
-    
-  return _D_;
-};

@@ -6,7 +6,7 @@
 #include "PID_V2.h"
 
 
-//#define USING_DAC
+#define USING_DAC
 
 #ifdef USING_DAC
 #include "DAC8563.h"
@@ -16,30 +16,11 @@ DAC8563 pwm=DAC8563(CS_PIN);
 _Pwm pwm;
 #endif
 
-#ifdef _VARIANT_ARDUINO_DUE_X_
-#if !defined(SERIAL_RX1_BUFFER_SIZE)
-  #define SERIAL_RX1_BUFFER_SIZE 128
-#endif
-
-#if !defined(SERIAL_TX1_BUFFER_SIZE)
-  #define SERIAL_TX1_BUFFER_SIZE 128
-#endif
-
-#define Serial  SerialUSB
-#include "Due_QDEC.h"
-
-Due_QDEC encoder; 
-#else
 #include "QEncoder.h"
 QEncoder encoder; 
-#endif
 
-YokeConfig yokeConfig;
-
-volatile uint8_t cs_pin = CS_PIN;
-
- int32_t xy_force[2] = {0,0};
- int32_t last_xy_force[2] = {0,0};
+int32_t xy_force[2] = {0,0};
+ //int32_t last_xy_force[2] = {0,0};
 
 double Setpoint[2], Input[2], Output[2];
 //double Kp=2, Ki=5, Kd=1;
@@ -77,16 +58,16 @@ void CalculateMaxSpeedAndMaxAcceleration(int idx);
 void findCenter(int idx);
 void Push_Button_01_ISR();
 void Update_Joystick_Buttons();
-#ifndef _VARIANT_ARDUINO_DUE_X_
+
 //void calculateEncoderPostion_X();
 //void calculateEncoderPostion_Y();
-#endif
+
 
 void setup() {
   // put your setup code here, to run once:
   
-  pinMode(ANALOG_RX,INPUT);
-  pinMode(ANALOG_RY,INPUT);
+  //pinMode(ANALOG_RX,INPUT);
+  //pinMode(ANALOG_RY,INPUT);
   
   Buttons.pinNumber = PUSH_BUTTON_01;
   Buttons.CurrentState = HIGH;
@@ -96,25 +77,16 @@ void setup() {
 
   attachInterrupt(digitalPinToInterrupt(Buttons.pinNumber), Push_Button_01_ISR, CHANGE);
 
-
-  #ifdef _VARIANT_ARDUINO_DUE_X_
-
-  analogReadResolution(12);
-  #else
   /*
   attachInterrupt(digitalPinToInterrupt(encoderPin_XA), calculateEncoderPostion_X, CHANGE);
   attachInterrupt(digitalPinToInterrupt(encoderPin_XB), calculateEncoderPostion_X, CHANGE);  
   attachInterrupt(digitalPinToInterrupt(encoderPin_YA), calculateEncoderPostion_Y, CHANGE);
   attachInterrupt(digitalPinToInterrupt(encoderPin_YB), calculateEncoderPostion_Y, CHANGE); 
   */ 
-  #endif
-
-  //encoder.setConfig(yokeConfig);
-  Joystick.setRxAxisRange(0,ADC_SCALE);
-  Joystick.setRyAxisRange(0,ADC_SCALE);
+ 
   delay(200);
   pwm.begin();
-  delay(200);
+  //delay(200);
   pwm.setPWM(X_AXIS,0);  
   pwm.setPWM(Y_AXIS,0);
   pwm.servo_off(X_AXIS);
@@ -189,9 +161,6 @@ void loop() {
   CalculateMaxSpeedAndMaxAcceleration(X_AXIS);
   pwm.setPWM(Y_AXIS,xy_force[Y_AXIS]);
   CalculateMaxSpeedAndMaxAcceleration(Y_AXIS);
-
-  Joystick.setRxAxis(analogRead(ANALOG_RX));
-  Joystick.setRyAxis(analogRead(ANALOG_RY));
   Update_Joystick_Buttons();
    
 }
@@ -307,11 +276,8 @@ void AutoCalibration(uint8_t idx)
 
 void Reset_Encoder(int idx)
 {
-     #ifdef _VARIANT_ARDUINO_DUE_X_
-      encoder.Reset_Encoder(idx);
-    #endif
+     
       encoder.axis[idx].currentPosition=0;
-
       encoder.updatePosition(idx);
 
 }

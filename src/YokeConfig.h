@@ -2,9 +2,9 @@
 #define YOKECONFIG_h
 #include <Arduino.h>
 
-#define CS_PIN            52    // SS pin for SPI
+#define CS_PIN              10    // SS pin for SPI
 
-#define BAUD_RATE 115200
+#define BAUD_RATE           115200
 
 #define MAX_X_VALUE         3000
 #define MAX_Y_VALUE         2000
@@ -13,64 +13,40 @@
 
 #define X_AXIS              0
 #define Y_AXIS              1
-#ifdef _VARIANT_ARDUINO_DUE_X_
-
-#define encoderPin_XA       2
-#define encoderPin_XB       13
-#define encoderPin_YA       5
-#define encoderPin_YB       4
-
-#define PUSH_BUTTON_01       A5
-
-#define PWM_X               DAC0
-#define PWM_Y               DAC1
-#define Dir_X               28
-#define Dir_Y               29
-#define SERVO_ON_X          30
-#define SERVO_ON_Y          31
-#define DAC_SCALE       4095
-#define ADC_SCALE       4095
-
-#else
-
-#define encoderPin_XA    (int)0
-#define encoderPin_XB    (int)1
-#define encoderPin_YA    (int)2
-#define encoderPin_YB    (int)3
 
 
-#define PUSH_BUTTON_01        7
+#define encoderPin_XA       0
+#define encoderPin_XB       1
+#define encoderPin_YA       2
+#define encoderPin_YB       3
 
-#define PWM_X  9
-#define PWM_Y  10
-#define PWM_FREQ 20000.0f
-#define MAXFORCE (F_CPU/(PWM_FREQ*2)) //16000000 is system clock of Leonardo
-#define MINFORCE (-MAXFORCE)
 
-#define Dir_X       8
-#define Dir_Y       11
-#define SERVO_ON_X         5
-#define SERVO_ON_Y         6
-#define DAC_SCALE           1023
-#define ADC_SCALE           1023
-#endif
+#define PUSH_BUTTON_01      7
 
-#define ANALOG_RX           A0
-#define ANALOG_RY           A1
+#define PWM_X               9
+#define PWM_Y               10
+#define PWM_FREQ            20000.0f
+#define MAXFORCE            (F_CPU/(PWM_FREQ*2)) //16000000 is system clock of Leonardo
+#define MINFORCE            (-MAXFORCE)
+
+#define Dir_X               8
+#define Dir_Y               11
+#define SERVO_ON_X          5
+#define SERVO_ON_Y          6
+
+
 #define DEBOUNCE_TIME       50
 
-#define PID_OUTPUT_LIMIT    127
-#define PID_SAMPLE_TIME     1
+#define PID_OUTPUT_LIMIT    50
+#define PID_SAMPLE_TIME     0.01
 #define KP      0.5
 #define KI      1
 #define KD      0.01
 
  struct Axis{
-    uint32_t cPR;
-    uint16_t maxAngle;
+   
     int32_t maxValue;
     int32_t  minValue;    
-    bool inverted;
     uint32_t lastEncoderTime;
     int32_t  currentPosition;
     int32_t  lastPosition;
@@ -93,13 +69,5 @@ struct BUTTONS{
     volatile uint32_t millis_time;
 };
 
-
-class YokeConfig {
-  public:
-    
-        YokeConfig(void);
-        void SetDefaults(void);
-        ~YokeConfig(void);
-};
 
 #endif
