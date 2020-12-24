@@ -36,7 +36,7 @@ PID myPID[]={PID(&Input[X_AXIS], &Output[X_AXIS], &Setpoint[X_AXIS], Kp[X_AXIS],
 
 volatile long debouncing_time = DEBOUNCE_TIME; //Debouncing Time in Milliseconds
 
-volatile bool initialRun = true;
+volatile bool initialRun = false;
 
 Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID,JOYSTICK_TYPE_JOYSTICK,
 1, 0, // Button Count, Hat Switch Count
@@ -64,11 +64,7 @@ void Update_Joystick_Buttons();
 
 
 void setup() {
-  // put your setup code here, to run once:
-  
-  //pinMode(ANALOG_RX,INPUT);
-  //pinMode(ANALOG_RY,INPUT);
-  
+ 
   Buttons.pinNumber = PUSH_BUTTON_01;
   Buttons.CurrentState = HIGH;
   Buttons.LastState = HIGH;
@@ -104,16 +100,22 @@ void setup() {
 
   Joystick.begin(true);
   YokeSetGains();
+
+  if (!Buttons.CurrentState)
+  {
+    initialRun = true;
+  }
   
 }
 
 void loop() {
+  
+  
   if (initialRun == true ) {
-//    position control is not correctly, wheel runs over disired postion serveral times before stop
-    
+//    position control is not correctly, wheel runs over disired postion serveral times before stop 
     findCenter(X_AXIS);
     delay(1000);
-    //findCenter(Y_AXIS);
+    findCenter(Y_AXIS);
     initialRun = false;
   } else
 
@@ -235,7 +237,6 @@ Joystick.setGains(gain);
 }
 
 /*
-#ifndef _VARIANT_ARDUINO_DUE_X_
 void calculateEncoderPostion_X() {
   encoder.tick_X();
 }
@@ -243,8 +244,8 @@ void calculateEncoderPostion_X() {
 void calculateEncoderPostion_Y() {
   encoder.tick_Y();
 }
-#endif
 */
+
 void Push_Button_01_ISR()
 {
   int bState = digitalReadFast(Buttons.pinNumber);

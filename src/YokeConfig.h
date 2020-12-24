@@ -6,8 +6,8 @@
 
 #define BAUD_RATE           115200
 
-#define MAX_X_VALUE         3000
-#define MAX_Y_VALUE         2000
+#define MAX_X_VALUE         5000
+#define MAX_Y_VALUE         3000
 #define TOTALGAIN_X         100
 #define TOTALGAIN_Y         100
 
