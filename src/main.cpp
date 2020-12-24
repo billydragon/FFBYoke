@@ -294,7 +294,7 @@ void findCenter(int idx)
 
   pwm.servo_on(idx);
    delay(2000);
-  //Serial.println("Move Axis to Min and Max. Press Button to Finish.");
+  //Serial.println("Find Center");
   while (Buttons.CurrentState)
   {
     encoder.updatePosition(idx);
@@ -302,7 +302,7 @@ void findCenter(int idx)
     {
     AutoCalibration(idx);
     LastPos = encoder.axis[idx].currentPosition;
-    sprintf(buff,"Axis[%d]: %ld,%ld", idx, encoder.axis[idx].minValue, encoder.axis[idx].maxValue);
+    sprintf(buff,"[%d]: %ld,%ld", idx, encoder.axis[idx].minValue, encoder.axis[idx].maxValue);
     Serial.println(buff);
     }
   }
@@ -312,7 +312,7 @@ void findCenter(int idx)
     encoder.axis[idx].minValue = -encoder.axis[idx].maxValue;
     gotoPosition(idx, Axis_Center);    //goto center X
     Reset_Encoder(idx);
-    sprintf(buff,"Set Axis[%d]: %ld - 0 - %ld", idx, encoder.axis[idx].minValue, encoder.axis[idx].maxValue);
+    sprintf(buff,"[%d]: %ld - 0 - %ld", idx, encoder.axis[idx].minValue, encoder.axis[idx].maxValue);
     Serial.println(buff);
     switch (idx)
     {
@@ -333,6 +333,7 @@ void findCenter(int idx)
 
 
 void gotoPosition(int idx, int32_t targetPosition) {
+  int32_t LastPos=0;
   char buff[64];
   Setpoint[idx] = targetPosition;
   while (encoder.axis[idx].currentPosition != targetPosition) {
@@ -342,8 +343,13 @@ void gotoPosition(int idx, int32_t targetPosition) {
     myPID[idx].Compute();
     pwm.setPWM(idx, -Output[idx]);
     CalculateMaxSpeedAndMaxAcceleration(idx);
-    sprintf(buff,"Axis[%d] Possition: %ld : Target: %ld : Force: %d",idx,encoder.axis[idx].currentPosition, (int32_t)Setpoint[idx], (int)Output[idx] );
+    if (LastPos !=encoder.axis[idx].currentPosition )
+    {
+    sprintf(buff,"[%d] P: %ld,T: %ld,F: %d",idx,encoder.axis[idx].currentPosition, (int32_t)Setpoint[idx], (int)Output[idx] );
     Serial.println(buff);
+    LastPos = encoder.axis[idx].currentPosition;
+    }
+    
   }
   
 }
