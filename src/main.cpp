@@ -55,7 +55,7 @@ PID myPID[]={PID(&Input[X_AXIS], &Output[X_AXIS], &Setpoint[X_AXIS], Kp[X_AXIS],
 
 volatile long debouncing_time = DEBOUNCE_TIME; //Debouncing Time in Milliseconds
 
-volatile bool initialRun = true;
+volatile bool initialRun = false;
 
 Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID,JOYSTICK_TYPE_JOYSTICK,
 1, 0, // Button Count, Hat Switch Count
@@ -132,7 +132,12 @@ void setup() {
 
   Joystick.begin(true);
   YokeSetGains();
+  if (Buttons.CurrentState== LOW)
+  {
+    initialRun == true;
+  }
   
+
 }
 
 void loop() {
