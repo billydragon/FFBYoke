@@ -5,11 +5,11 @@
 #define CS_PIN            52    // SS pin for SPI
 
 #define BAUD_RATE 115200
-
+#define XY_FORCE_INVERT    
 #define MAX_X_VALUE         3000
 #define MAX_Y_VALUE         2000
-#define TOTALGAIN_X         100
-#define TOTALGAIN_Y         100
+#define TOTALGAIN_X         50
+#define TOTALGAIN_Y         50
 
 #define X_AXIS              0
 #define Y_AXIS              1
@@ -59,11 +59,11 @@
 #define ANALOG_RY           A1
 #define DEBOUNCE_TIME       50
 
-#define PID_OUTPUT_LIMIT    127
+#define PID_OUTPUT_LIMIT    100
 #define PID_SAMPLE_TIME     1
-#define KP      0.5
-#define KI      1
-#define KD      0.01
+#define KP      2
+#define KI      0.5
+#define KD      0.05
 
  struct Axis{
     uint32_t cPR;

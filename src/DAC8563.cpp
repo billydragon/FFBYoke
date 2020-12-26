@@ -55,7 +55,7 @@ void DAC8563::begin()
 void DAC8563::setPWM(int idx, int32_t force)
  {
         //char buff[64];
-        uint16_t DACValue = map(force,-255,255,DAC_MAX,DAC_MIN); 
+        uint16_t DACValue = map(force,-255,255,DAC_MIN,DAC_MAX); 
          switch (idx)
          {
          case X_AXIS:
