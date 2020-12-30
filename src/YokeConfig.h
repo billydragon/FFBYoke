@@ -100,6 +100,8 @@ class YokeConfig {
         YokeConfig(void);
         void SetDefaults(void);
         ~YokeConfig(void);
+        bool Motor_Inv_X = false;
+        bool Motor_Inv_Y = false;
 };
 
 #endif

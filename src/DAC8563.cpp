@@ -28,7 +28,7 @@ DAC8563::DAC8563( uint8_t cs_pin, float vref)
   _vref=vref;
 };
 */
-void DAC8563::begin()
+void DAC8563::begin(YokeConfig yConfig)
 {
   pinMode(SERVO_ON_X,OUTPUT);
 	pinMode(SERVO_ON_Y,OUTPUT);
@@ -46,7 +46,8 @@ void DAC8563::begin()
   SPI.setBitOrder(MSBFIRST);
   #endif
   initialize();
-
+  _Motor_Inv_X = yConfig.Motor_Inv_X;
+  _Motor_Inv_Y = yConfig.Motor_Inv_Y;
   //Debug
  // SerialUSB.println("Init SPI Done.");
   //delay(1000);
@@ -54,22 +55,31 @@ void DAC8563::begin()
 
 void DAC8563::setPWM(int idx, int32_t force)
  {
-        //char buff[64];
-        uint16_t DACValue = map(force,-255,255,DAC_MIN,DAC_MAX); 
+        uint16_t DACValue = 0;
+
          switch (idx)
          {
          case X_AXIS:
-                outPutValue(CMD_SETA_UPDATEA,DACValue);
+                if(_Motor_Inv_X == true)
+                    DACValue = map(force,-255,255,DAC_MAX,DAC_MIN);
+                else{
+                    DACValue = map(force,-255,255,DAC_MIN,DAC_MAX); }
+                 
+                    outPutValue(CMD_SETA_UPDATEA, DACValue);
                  break;
          case Y_AXIS:
-                outPutValue(CMD_SETB_UPDATEB,DACValue);
+                 if(_Motor_Inv_Y == true)
+                    DACValue = map(force,-255,255,DAC_MAX, DAC_MIN); 
+                    else{
+                    DACValue = map(force,-255,255,DAC_MIN,DAC_MAX);}
+                
+                    outPutValue(CMD_SETB_UPDATEB, DACValue);
                 break;
          default:
                  break;
          }
 
-        // sprintf(buff,"setPWM(%d): %d",idx, DACValue);
-        // SerialUSB.println(buff);
+
  }
 
  void DAC8563::servo_on(int idx)
@@ -91,7 +101,7 @@ void DAC8563::servo_off(int idx)
 		digitalWriteFast(SERVO_ON_X,LOW);
 	}
 	else
-	digitalWriteFast(SERVO_ON_Y,LOW);
+	  digitalWriteFast(SERVO_ON_Y,LOW);
 }
 
 

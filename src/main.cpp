@@ -2,52 +2,41 @@
 #include "Joystick.h"
 #include "DigitalWriteFast.h"
 #include "YokeConfig.h"
-
+#include "ConfigManager.h"
 #include "PID_V2.h"
 
-#include "DAC8563.h"
-DAC8563 pwm=DAC8563(CS_PIN);
 
 #ifdef _VARIANT_ARDUINO_DUE_X_
-#if !defined(SERIAL_RX1_BUFFER_SIZE)
-  #define SERIAL_RX1_BUFFER_SIZE 128
-#endif
-
-#if !defined(SERIAL_TX1_BUFFER_SIZE)
-  #define SERIAL_TX1_BUFFER_SIZE 128
-#endif
-
 #define Serial  SerialUSB
-#include "Due_QDEC.h"
+#endif
 
-Due_QDEC encoder; 
+#define USING_DAC
+
+#ifdef USING_DAC
+#include "DAC8563.h"
+DAC8563 pwm=DAC8563(CS_PIN);
 #else
+#include "PWM.h"
+_Pwm pwm;
+#endif
+
 #include "QEncoder.h"
 QEncoder encoder; 
-#endif
 
-YokeConfig yokeConfig;
-
-volatile uint8_t cs_pin = CS_PIN;
-
- int32_t xy_force[2] = {0,0};
- int32_t last_xy_force[2] = {0,0};
+int32_t xy_force[2] = {0,0};
+ //int32_t last_xy_force[2] = {0,0};
 
 double Setpoint[2], Input[2], Output[2];
 //double Kp=2, Ki=5, Kd=1;
 //double aggKp=4, aggKi=0.2, aggKd=1;
- double Kp[2] = {KP,KP};
- double Ki[2] = {KI,KI};
- double Kd[2] = {KD,KD};
+ double Kp[2];
+ double Ki[2];
+ double Kd[2];
 
-PID myPID[]={PID(&Input[X_AXIS], &Output[X_AXIS], &Setpoint[X_AXIS], Kp[X_AXIS], Ki[X_AXIS], Kd[X_AXIS], DIRECT), PID(&Input[Y_AXIS], &Output[Y_AXIS], &Setpoint[Y_AXIS], Kp[Y_AXIS], Ki[Y_AXIS], Kd[Y_AXIS], DIRECT)};
-
-//PID myPID_X(&Input[X_AXIS], &Output[X_AXIS], &Setpoint[X_AXIS], Kp[X_AXIS], Ki[X_AXIS], Kd[X_AXIS], DIRECT);
-//PID myPID_Y(&Input[Y_AXIS], &Output[Y_AXIS], &Setpoint[Y_AXIS], Kp[Y_AXIS], Ki[Y_AXIS], Kd[Y_AXIS], DIRECT);
+PID myPID[] = {PID(&Input[X_AXIS], &Output[X_AXIS], &Setpoint[X_AXIS], Kp[X_AXIS], Ki[X_AXIS], Kd[X_AXIS], DIRECT),
+               PID(&Input[Y_AXIS], &Output[Y_AXIS], &Setpoint[Y_AXIS], Kp[Y_AXIS], Ki[Y_AXIS], Kd[Y_AXIS], DIRECT)}; 
 
 volatile long debouncing_time = DEBOUNCE_TIME; //Debouncing Time in Milliseconds
-
-volatile bool initialRun = true;
 
 Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID,JOYSTICK_TYPE_JOYSTICK,
 1, 0, // Button Count, Hat Switch Count
@@ -58,28 +47,46 @@ false, false, false); // No accelerator, brake, or steering
 
 BUTTONS Buttons; 
 
- Gains gain[2];
- EffectParams effects[2];
+bool initialRun = false;
 
+Gains gain[2];
+EffectParams effects[2];
+
+ConfigManager CfgManager = ConfigManager();
+YokeConfig yokeConfig;
 void calculateEncoderPostion(int idx);
-void YokeSetGains();
+void Set_Gains();
 void SetEffects();
 void gotoPosition(int idx, int32_t targetPosition);
 void CalculateMaxSpeedAndMaxAcceleration(int idx);
 void findCenter(int idx);
 void Push_Button_01_ISR();
 void Update_Joystick_Buttons();
-#ifndef _VARIANT_ARDUINO_DUE_X_
+
 //void calculateEncoderPostion_X();
 //void calculateEncoderPostion_Y();
-#endif
+
+void Set_PIDs()
+{
+
+  for(int ax =0; ax <2 ; ax++)
+  {
+  Kp[ax]= CfgManager._Pids[ax].pid.Kp;
+  Ki[ax] = CfgManager._Pids[ax].pid.Ki;
+  Kd[ax] = CfgManager._Pids[ax].pid.Fd;
+  myPID[ax].SetSampleTime(CfgManager._Pids[ax].pid.SampleTime);
+  myPID[ax].SetOutputLimits(-CfgManager._Pids[ax].pid.MaxOutput, CfgManager._Pids[ax].pid.MaxOutput);
+  myPID[ax].SetMode(AUTOMATIC);
+  Input[ax] = encoder.axis[ax].currentPosition;
+  }
+ 
+}
 
 void setup() {
-  // put your setup code here, to run once:
-  
-  pinMode(ANALOG_RX,INPUT);
-  pinMode(ANALOG_RY,INPUT);
-  
+ 
+  Serial.begin(BAUD_RATE);
+  Joystick.begin(true);
+  CfgManager.begin();   
   Buttons.pinNumber = PUSH_BUTTON_01;
   Buttons.CurrentState = HIGH;
   Buttons.LastState = HIGH;
@@ -88,52 +95,35 @@ void setup() {
 
   attachInterrupt(digitalPinToInterrupt(Buttons.pinNumber), Push_Button_01_ISR, CHANGE);
 
-
-  #ifdef _VARIANT_ARDUINO_DUE_X_
-
-  analogReadResolution(12);
-  #else
   /*
   attachInterrupt(digitalPinToInterrupt(encoderPin_XA), calculateEncoderPostion_X, CHANGE);
   attachInterrupt(digitalPinToInterrupt(encoderPin_XB), calculateEncoderPostion_X, CHANGE);  
   attachInterrupt(digitalPinToInterrupt(encoderPin_YA), calculateEncoderPostion_Y, CHANGE);
   attachInterrupt(digitalPinToInterrupt(encoderPin_YB), calculateEncoderPostion_Y, CHANGE); 
   */ 
-  #endif
-
-  //encoder.setConfig(yokeConfig);
-  Joystick.setRxAxisRange(0,ADC_SCALE);
-  Joystick.setRyAxisRange(0,ADC_SCALE);
-  delay(1500);
-  pwm.begin();
   delay(200);
+  pwm.begin(yokeConfig);
+  //delay(200);
   pwm.setPWM(X_AXIS,0);  
   pwm.setPWM(Y_AXIS,0);
   pwm.servo_off(X_AXIS);
   pwm.servo_off(Y_AXIS);
-  
-  for (int i = 0; i < 2; i++)
-  {
-    Input[i] = encoder.axis[i].currentPosition;
-    myPID[i].SetMode(AUTOMATIC);
-    myPID[i].SetSampleTime(PID_SAMPLE_TIME);
-    myPID[i].SetOutputLimits(-PID_OUTPUT_LIMIT, PID_OUTPUT_LIMIT);
-  }
-  
-  Serial.begin(BAUD_RATE);
+   initialRun = CfgManager._SysCtrl.ctrl.Auto_Calibration;
+   yokeConfig.Motor_Inv_X = CfgManager._SysCtrl.ctrl.Motor_Inv_X;
+   yokeConfig.Motor_Inv_Y = CfgManager._SysCtrl.ctrl.Motor_Inv_Y;
 
-  Joystick.begin(true);
-  YokeSetGains();
-  
-   pwm.servo_on(X_AXIS);
-   pwm.servo_on(Y_AXIS);
-
+   if(!Buttons.CurrentState)
+   {
+     initialRun = true;
+   }
 }
 
 void loop() {
-  if (initialRun == true ) {
-//    position control is not correctly, wheel runs over disired postion serveral times before stop
-    
+  
+   Set_PIDs(); 
+  
+  if (initialRun == true ) 
+  {
     findCenter(X_AXIS);
     delay(1000);
     findCenter(Y_AXIS);
@@ -161,17 +151,19 @@ void loop() {
         
     }
 
-
+    CfgManager.GetUpdate();
+    Set_Gains();
     SetEffects();
-    
     Joystick.getForce(xy_force);
-    //My Yoke action xy_force[0] on Y axis.
-    #ifdef XY_FORCE_INVERT
-    int32_t tempForce_x = xy_force[0];
-    int32_t tempForce_y = xy_force[1];
-    xy_force[0] = tempForce_y;
-    xy_force[1] = tempForce_x;
-    #endif
+
+    if(CfgManager._SysCtrl.ctrl.Swap_XY_Forces == true)   //Swap axis forces
+    {
+        int32_t f = xy_force[Y_AXIS];
+        xy_force[Y_AXIS] = xy_force[X_AXIS];
+        xy_force[X_AXIS] = f;
+
+    }
+
     xy_force[X_AXIS] = constrain(xy_force[X_AXIS], -255, 255);
     xy_force[Y_AXIS] = constrain(xy_force[Y_AXIS], -255, 255);
     
@@ -189,23 +181,19 @@ void loop() {
   }
 
   pwm.setPWM(X_AXIS,xy_force[X_AXIS]);
-  //CalculateMaxSpeedAndMaxAcceleration(X_AXIS);
+  CalculateMaxSpeedAndMaxAcceleration(X_AXIS);
   pwm.setPWM(Y_AXIS,xy_force[Y_AXIS]);
-  //CalculateMaxSpeedAndMaxAcceleration(Y_AXIS);
-
-  Joystick.setRxAxis(analogRead(ANALOG_RX));
-  Joystick.setRyAxis(analogRead(ANALOG_RY));
+  CalculateMaxSpeedAndMaxAcceleration(Y_AXIS);
   Update_Joystick_Buttons();
-   
+  
 }
 
 
 void Update_Joystick_Buttons()
 {
 
-      Joystick.setButton(0, !Buttons.CurrentState);
+    Joystick.setButton(0, !Buttons.CurrentState);
      
-
 }
 
 void SetEffects()
@@ -234,42 +222,32 @@ Joystick.setEffectParams(effects);
 
 }   
 
-void YokeSetGains()
+void Set_Gains()
 {
-//set x axis gains
-gain[X_AXIS].totalGain = TOTALGAIN_X;
-gain[X_AXIS].constantGain = 50;
-gain[X_AXIS].rampGain = 50;
-gain[X_AXIS].squareGain = 50;
-gain[X_AXIS].sineGain = 50;
-gain[X_AXIS].triangleGain = 50;
-gain[X_AXIS].sawtoothdownGain = 50;
-gain[X_AXIS].sawtoothupGain = 50;
-gain[X_AXIS].springGain = 50;
-gain[X_AXIS].damperGain = 50;
-gain[X_AXIS].inertiaGain = 50;
-gain[X_AXIS].frictionGain = 50;
 
-//set y axis gains
-gain[Y_AXIS].totalGain = TOTALGAIN_Y;
-gain[Y_AXIS].constantGain = 50;
-gain[Y_AXIS].rampGain = 50;
-gain[Y_AXIS].squareGain = 50;
-gain[Y_AXIS].sineGain = 50;
-gain[Y_AXIS].triangleGain = 50;
-gain[Y_AXIS].sawtoothdownGain = 50;
-gain[Y_AXIS].sawtoothupGain = 50;
-gain[Y_AXIS].springGain = 50;
-gain[Y_AXIS].damperGain = 50;
-gain[Y_AXIS].inertiaGain = 50;
-gain[Y_AXIS].frictionGain = 50;
+for(int i = 0; i < 2 ; i++)
+{
+          //set x axis gains
+          gain[i].totalGain        = CfgManager._Gains[i].gain.totalGain;
+          gain[i].constantGain     = CfgManager._Gains[i].gain.constantGain;
+          gain[i].rampGain         = CfgManager._Gains[i].gain.rampGain;
+          gain[i].squareGain       = CfgManager._Gains[i].gain.squareGain;
+          gain[i].sineGain         = CfgManager._Gains[i].gain.sineGain;
+          gain[i].triangleGain     = CfgManager._Gains[i].gain.triangleGain;
+          gain[i].sawtoothdownGain = CfgManager._Gains[i].gain.sawtoothdownGain;
+          gain[i].sawtoothupGain   = CfgManager._Gains[i].gain.sawtoothupGain;
+          gain[i].springGain       = CfgManager._Gains[i].gain.springGain;
+          gain[i].damperGain       = CfgManager._Gains[i].gain.damperGain;
+          gain[i].inertiaGain      = CfgManager._Gains[i].gain.inertiaGain;
+          gain[i].frictionGain     = CfgManager._Gains[i].gain.frictionGain;
+          gain[i].customGain       = CfgManager._Gains[i].gain.customGain;
+}
 
-Joystick.setGains(gain);
+          Joystick.setGains(gain);
 
 }
 
 /*
-#ifndef _VARIANT_ARDUINO_DUE_X_
 void calculateEncoderPostion_X() {
   encoder.tick_X();
 }
@@ -277,8 +255,8 @@ void calculateEncoderPostion_X() {
 void calculateEncoderPostion_Y() {
   encoder.tick_Y();
 }
-#endif
 */
+
 void Push_Button_01_ISR()
 {
   int bState = digitalReadFast(Buttons.pinNumber);
@@ -310,11 +288,8 @@ void AutoCalibration(uint8_t idx)
 
 void Reset_Encoder(int idx)
 {
-     #ifdef _VARIANT_ARDUINO_DUE_X_
-      encoder.Reset_Encoder(idx);
-    #endif
+     
       encoder.axis[idx].currentPosition=0;
-
       encoder.updatePosition(idx);
 
 }
@@ -328,8 +303,9 @@ void findCenter(int idx)
   encoder.axis[idx].maxValue =0;
   Reset_Encoder(idx);
 
+  pwm.servo_on(idx);
    delay(2000);
-  //Serial.println("Move Axis to Min and Max. Press Button to Finish.");
+  //Serial.println("Find Center");
   while (Buttons.CurrentState)
   {
     encoder.updatePosition(idx);
@@ -337,7 +313,7 @@ void findCenter(int idx)
     {
     AutoCalibration(idx);
     LastPos = encoder.axis[idx].currentPosition;
-    sprintf(buff,"Axis[%d]: %ld,%ld", idx, encoder.axis[idx].minValue, encoder.axis[idx].maxValue);
+    sprintf(buff,"[%d]: %ld,%ld", idx, encoder.axis[idx].minValue, encoder.axis[idx].maxValue);
     Serial.println(buff);
     }
   }
@@ -347,7 +323,7 @@ void findCenter(int idx)
     encoder.axis[idx].minValue = -encoder.axis[idx].maxValue;
     gotoPosition(idx, Axis_Center);    //goto center X
     Reset_Encoder(idx);
-    sprintf(buff,"Set Axis[%d]: %ld - 0 - %ld", idx, encoder.axis[idx].minValue, encoder.axis[idx].maxValue);
+    sprintf(buff,"[%d]: %ld - 0 - %ld", idx, encoder.axis[idx].minValue, encoder.axis[idx].maxValue);
     Serial.println(buff);
     switch (idx)
     {
@@ -368,6 +344,7 @@ void findCenter(int idx)
 
 
 void gotoPosition(int idx, int32_t targetPosition) {
+  int32_t LastPos=0;
   char buff[64];
   Setpoint[idx] = targetPosition;
   while (encoder.axis[idx].currentPosition != targetPosition) {
@@ -377,8 +354,13 @@ void gotoPosition(int idx, int32_t targetPosition) {
     myPID[idx].Compute();
     pwm.setPWM(idx, -Output[idx]);
     CalculateMaxSpeedAndMaxAcceleration(idx);
-    sprintf(buff,"Axis[%d] Possition: %ld : Target: %ld : Force: %d",idx,encoder.axis[idx].currentPosition, (int32_t)Setpoint[idx], (int)Output[idx] );
+    if (LastPos !=encoder.axis[idx].currentPosition )
+    {
+    sprintf(buff,"[%d] P: %ld,T: %ld,F: %d",idx,encoder.axis[idx].currentPosition, (int32_t)Setpoint[idx], (int)Output[idx] );
     Serial.println(buff);
+    LastPos = encoder.axis[idx].currentPosition;
+    }
+    
   }
   
 }

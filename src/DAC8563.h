@@ -62,12 +62,14 @@ class DAC8563
   private:
     uint8_t _cs_pin;
     float   _vref;
+    bool _Motor_Inv_X = false;
+    bool _Motor_Inv_Y = false;
 
   public:
     DAC8563();
     DAC8563(uint8_t cs_pin);
     //DAC8563(uint8_t cs_pin, float vref);
-    void begin();
+    void begin(YokeConfig yConfig);
     void setPWM(int idx, int32_t val);
     void servo_on(int idx);
     void servo_off(int idx);
