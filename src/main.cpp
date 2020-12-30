@@ -2,9 +2,12 @@
 #include "Joystick.h"
 #include "DigitalWriteFast.h"
 #include "YokeConfig.h"
-
+#include "ConfigManager.h"
 #include "PID_V2.h"
 
+#ifdef _VARIANT_ARDUINO_DUE_X_
+#define Serial  SerialUSB
+#endif
 
 #define USING_DAC
 
@@ -47,8 +50,14 @@ false, false, false); // No accelerator, brake, or steering
 
 BUTTONS Buttons; 
 
- Gains gain[2];
- EffectParams effects[2];
+GainsConfig gains_cf[2];
+PidsConfig  pids_cf[2];
+System_Control sys_cf;
+ 
+Gains gain[2];
+EffectParams effects[2];
+
+ConfigManager Cfg_Mangager = ConfigManager();
 
 void calculateEncoderPostion(int idx);
 void YokeSetGains();
@@ -164,7 +173,8 @@ void loop() {
   pwm.setPWM(Y_AXIS,xy_force[Y_AXIS]);
   CalculateMaxSpeedAndMaxAcceleration(Y_AXIS);
   Update_Joystick_Buttons();
-   
+  Cfg_Mangager.GetUpdate(gains_cf,pids_cf, sys_cf);
+
 }
 
 
@@ -204,33 +214,39 @@ Joystick.setEffectParams(effects);
 
 void YokeSetGains()
 {
+  memcpy(gain,gains_cf,sizeof(gains_cf));
+
+/*
 //set x axis gains
-gain[X_AXIS].totalGain = TOTALGAIN_X;
-gain[X_AXIS].constantGain = 100;
-gain[X_AXIS].rampGain = 100;
-gain[X_AXIS].squareGain = 100;
-gain[X_AXIS].sineGain = 100;
-gain[X_AXIS].triangleGain = 100;
-gain[X_AXIS].sawtoothdownGain = 100;
-gain[X_AXIS].sawtoothupGain = 100;
-gain[X_AXIS].springGain = 100;
-gain[X_AXIS].damperGain = 100;
-gain[X_AXIS].inertiaGain = 100;
-gain[X_AXIS].frictionGain = 100;
+gain[X_AXIS].totalGain = gains_cf[X_AXIS].ToBytes[0];
+gain[X_AXIS].constantGain = gains_cf[X_AXIS].ToBytes[1];
+gain[X_AXIS].rampGain = gains_cf[X_AXIS].ToBytes[2];
+gain[X_AXIS].squareGain = gains_cf[X_AXIS].ToBytes[3];
+gain[X_AXIS].sineGain = gains_cf[X_AXIS].ToBytes[4];
+gain[X_AXIS].triangleGain = gains_cf[X_AXIS].ToBytes[5];
+gain[X_AXIS].sawtoothdownGain = gains_cf[X_AXIS].ToBytes[6];
+gain[X_AXIS].sawtoothupGain = gains_cf[X_AXIS].ToBytes[7];
+gain[X_AXIS].springGain = gains_cf[X_AXIS].ToBytes[8];
+gain[X_AXIS].damperGain = gains_cf[X_AXIS].ToBytes[9];
+gain[X_AXIS].inertiaGain = gains_cf[X_AXIS].ToBytes[10];
+gain[X_AXIS].frictionGain = gains_cf[X_AXIS].ToBytes[11];
+gain[X_AXIS].customGain = gains_cf[X_AXIS].ToBytes[12];
 
 //set y axis gains
-gain[Y_AXIS].totalGain = TOTALGAIN_Y;
-gain[Y_AXIS].constantGain = 100;
-gain[Y_AXIS].rampGain = 100;
-gain[Y_AXIS].squareGain = 100;
-gain[Y_AXIS].sineGain = 100;
-gain[Y_AXIS].triangleGain = 100;
-gain[Y_AXIS].sawtoothdownGain = 100;
-gain[Y_AXIS].sawtoothupGain = 100;
-gain[Y_AXIS].springGain = 100;
-gain[Y_AXIS].damperGain = 100;
-gain[Y_AXIS].inertiaGain = 100;
-gain[Y_AXIS].frictionGain = 100;
+gain[Y_AXIS].totalGain = gains_cf[Y_AXIS].ToBytes[0];
+gain[Y_AXIS].constantGain = gains_cf[Y_AXIS].ToBytes[1];
+gain[Y_AXIS].rampGain = gains_cf[Y_AXIS].ToBytes[2];
+gain[Y_AXIS].squareGain = gains_cf[Y_AXIS].ToBytes[3];
+gain[Y_AXIS].sineGain = gains_cf[Y_AXIS].ToBytes[4];
+gain[Y_AXIS].triangleGain = gains_cf[Y_AXIS].ToBytes[5];
+gain[Y_AXIS].sawtoothdownGain = gains_cf[Y_AXIS].ToBytes[6];
+gain[Y_AXIS].sawtoothupGain = gains_cf[Y_AXIS].ToBytes[7];
+gain[Y_AXIS].springGain = gains_cf[Y_AXIS].ToBytes[8];
+gain[Y_AXIS].damperGain = gains_cf[Y_AXIS].ToBytes[9];
+gain[Y_AXIS].inertiaGain = gains_cf[Y_AXIS].ToBytes[10];
+gain[Y_AXIS].frictionGain = gains_cf[Y_AXIS].ToBytes[11];
+gain[Y_AXIS].customGain = gains_cf[Y_AXIS].ToBytes[12];
+*/
 
 Joystick.setGains(gain);
 
