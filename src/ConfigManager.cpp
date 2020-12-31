@@ -50,51 +50,54 @@ ConfigManager::~ConfigManager()
 {
 }
 
-void ConfigManager::send_gains()
+void ConfigManager::send_gains(byte dt)
 {
-       
   for (int i = 0; i < 2; i++)
         {
           for (int j = 0; j < 13; j++)
           {
             CMD.Command = command_type.Read_Memory;
-            CMD.Data_Type = data_type.Gains_Memory;
+            CMD.Data_Type = dt;
             CMD.Axis=i;
             CMD.Start_Index = j;
             CMD.Lenght = 1;
             _writeAnything(CMD.toBytes);
             _writeAnything(_Gains[i].ToBytes[j]);   
-            delay(20);
+            //delay(20);
           }
           
         }
 }
 
-void ConfigManager::send_sys_control()
+void ConfigManager::send_sys_control(byte dt)
 {
-            byte cmd[3];
-            cmd[0] = command_type.Read_Memory;
-            cmd[1] = data_type.System_Memory;
-            cmd[2] = _SysCtrl.ToByte;
-            _writeAnything(cmd);
-            delay(20);
+            //byte cmd[3];
+            CMD.Command = command_type.Read_Memory;
+            CMD.Data_Type = dt;
+            CMD.Axis = 0;
+            CMD.Start_Index = 0;
+            CMD.Lenght  = 1;
+            _writeAnything(CMD.toBytes);
+            _writeAnything(_SysCtrl.ToByte);
+            
+            //delay(20);
       
 }
 
-void ConfigManager::send_Pids()
+void ConfigManager::send_Pids(byte dt)
 {
   for (int i = 0; i < 2; i++)
         {
           for (int j = 0; j < 5; j++)
           {
             CMD.Command = command_type.Read_Memory;
-            CMD.Data_Type = data_type.Pids_Memory;
+            CMD.Data_Type = dt;
             CMD.Axis=i;
             CMD.Start_Index = j;
             CMD.Lenght = 4;
               _writeAnything(CMD.toBytes); 
               _writeAnything(_Pids[i].ToFloat[j]);
-              delay(20);
+              //delay(20);
           }
         }
 }
@@ -136,6 +139,9 @@ void ConfigManager::receive_Pids()
 
 void ConfigManager::receive_Sys_control()
 {
+      byte idx = Serial.read();           // 3 Axis index
+      byte pos = Serial.read();           // 4
+      byte cmdlen = Serial.read();        // 5  lenght of data  
       _SysCtrl.ToByte = Serial.read();
 
 }
@@ -156,20 +162,20 @@ void ConfigManager::GetUpdate()
         switch (dtype)
           {
               case data_type.Gains_Memory:
-                      send_gains();
+                      send_gains(dtype);
                   
                 break;
               case data_type.Pids_Memory: //request PID Config
-                      send_Pids();
+                      send_Pids(dtype);
                  
               break;
               case data_type.System_Memory:  
-                      send_sys_control();
+                      send_sys_control(dtype);
               break;
               case data_type.All_Memory: //request all
-                      send_gains();
-                      send_Pids();
-                      send_sys_control();
+                      send_gains(data_type.Gains_Memory);
+                      send_Pids(data_type.Pids_Memory);
+                      send_sys_control(data_type.System_Memory);
                      
               break;
               default:
@@ -212,27 +218,27 @@ void ConfigManager::GetUpdate()
               case data_type.Gains_Eeprom:
                      
                     EEPROM_writeAnything(ADDR_GAINS_START,_Gains);
-                    delay(50); 
+                    delay(10); 
                     //memcpy(_gains,uGains,sizeof(_gains));
               break;
               case data_type.Pids_Eeprom:
                     EEPROM_writeAnything(ADDR_PIDS_START,_Pids);
-                     delay(50);
+                     delay(10);
                      // memcpy(_pids,uPids,sizeof(_pids));
               break;
               case data_type.System_Eeprom:
                     EEPROM_writeAnything(ADDR_START_SYSCONTROL,_SysCtrl.ToByte ); 
-                    delay(50);
+                    delay(10);
                     //_sys_ctr = uSysControl;
 
               break;
               case data_type.All_Eeprom:
                     EEPROM_writeAnything(ADDR_GAINS_START,_Gains);
-                    delay(50); 
+                    delay(10); 
                     EEPROM_writeAnything(ADDR_PIDS_START,_Pids);
-                    delay(50);
+                    delay(10);
                     EEPROM_writeAnything(ADDR_START_SYSCONTROL,_SysCtrl.ToByte ); 
-                    delay(50);
+                    delay(10);
                     
 
               break;
@@ -249,28 +255,28 @@ void ConfigManager::GetUpdate()
             {
                     case data_type.Gains_Eeprom:
                           EEPROM_readAnything(ADDR_GAINS_START,_Gains); 
-                           delay(20);     
-                          send_gains();
+                           //delay(20);     
+                          send_gains(dtype);
                     break;  
                      case data_type.Pids_Eeprom:
                           EEPROM_readAnything(ADDR_PIDS_START,_Pids);
-                           delay(20);  
-                          send_Pids();
+                           //delay(20);  
+                          send_Pids(dtype);
                     break; 
                     case data_type.System_Eeprom:
                           EEPROM_readAnything(ADDR_START_SYSCONTROL,_SysCtrl.ToByte); 
-                          send_sys_control(); 
+                          send_sys_control(dtype); 
                     case data_type.All_Eeprom:
                          //load_all_eeprom();
                          EEPROM_readAnything(ADDR_GAINS_START,_Gains);
-                         delay(20);
-                         send_gains();
+                         //delay(20);
+                         send_gains(data_type.Gains_Eeprom);
                         EEPROM_readAnything(ADDR_PIDS_START,_Pids);
-                        delay(20);
-                        send_Pids();
+                        //delay(20);
+                        send_Pids(data_type.Pids_Eeprom);
                         EEPROM_readAnything(ADDR_START_SYSCONTROL,_SysCtrl.ToByte); 
-                        delay(20);
-                        send_sys_control();
+                        //delay(20);
+                        send_sys_control(data_type.System_Eeprom);
                          
                     break;
                     break;  
@@ -286,14 +292,15 @@ void ConfigManager::GetUpdate()
                   switch(dtype)
                   {
                         case data_type.Reset_Default:
+                              
                               memcpy(_Gains, default_Gains,sizeof(default_Gains));
-                              delay(20);    
-                              send_gains();
+                              //delay(20);    
+                              send_gains(data_type.Gains_Memory);
                               memcpy(_Pids, default_Pids,sizeof(default_Pids));
-                              delay(20);  
-                              send_Pids();
+                              //delay(20);  
+                              send_Pids(data_type.Pids_Memory);
                               _SysCtrl = default_SysCtrl;
-                              send_sys_control();
+                              send_sys_control(data_type.System_Memory);
                               
                         break; 
                         

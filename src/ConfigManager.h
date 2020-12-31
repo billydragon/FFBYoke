@@ -126,9 +126,9 @@ class ConfigManager
 {
 private:
         
-        void send_gains();
-        void send_sys_control();
-        void send_Pids();
+        void send_gains(byte dt);
+        void send_sys_control(byte dt);
+        void send_Pids(byte dt);
         void receive_Gains();
         void receive_Pids();
         void receive_Sys_control();
