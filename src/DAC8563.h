@@ -26,7 +26,7 @@
 #include "Arduino.h"
 #include <SPI.h>
 #include "YokeConfig.h"
-
+#include "ConfigManager.h"
 
 
 #define DEFAULT_VREF      3.3383
@@ -64,12 +64,14 @@ class DAC8563
     float   _vref;
     bool _Motor_Inv_X = false;
     bool _Motor_Inv_Y = false;
+    int _Motor_Dir_Delay = 0;
+    int16_t Zero_Speed = 0;
 
   public:
     DAC8563();
     DAC8563(uint8_t cs_pin);
     //DAC8563(uint8_t cs_pin, float vref);
-    void begin(YokeConfig yConfig);
+    void begin(ConfigManager cfg_mangager);
     void setPWM(int idx, int32_t val);
     void servo_on(int idx);
     void servo_off(int idx);

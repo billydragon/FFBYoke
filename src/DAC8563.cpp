@@ -28,7 +28,7 @@ DAC8563::DAC8563( uint8_t cs_pin, float vref)
   _vref=vref;
 };
 */
-void DAC8563::begin(YokeConfig yConfig)
+void DAC8563::begin(ConfigManager cfg_mangager )
 {
   pinMode(SERVO_ON_X,OUTPUT);
 	pinMode(SERVO_ON_Y,OUTPUT);
@@ -46,8 +46,10 @@ void DAC8563::begin(YokeConfig yConfig)
   SPI.setBitOrder(MSBFIRST);
   #endif
   initialize();
-  _Motor_Inv_X = yConfig.Motor_Inv_X;
-  _Motor_Inv_Y = yConfig.Motor_Inv_Y;
+  _Motor_Inv_X = cfg_mangager.Flags.Motor_Inv_X;
+  _Motor_Inv_Y = cfg_mangager.Flags.Motor_Inv_Y;
+  _Motor_Dir_Delay = cfg_mangager._SysConfig.Motor_Dir_Delay;
+  Zero_Speed = map(0,-255,255,DAC_MIN,DAC_MAX);
   //Debug
  // SerialUSB.println("Init SPI Done.");
   //delay(1000);
@@ -56,7 +58,7 @@ void DAC8563::begin(YokeConfig yConfig)
 void DAC8563::setPWM(int idx, int32_t force)
  {
         uint16_t DACValue = 0;
-
+        
          switch (idx)
          {
          case X_AXIS:
@@ -64,15 +66,17 @@ void DAC8563::setPWM(int idx, int32_t force)
                     DACValue = map(force,-255,255,DAC_MAX,DAC_MIN);
                 else{
                     DACValue = map(force,-255,255,DAC_MIN,DAC_MAX); }
-                 
+                    outPutValue(CMD_SETA_UPDATEA, Zero_Speed);
+                    delay(_Motor_Dir_Delay);
                     outPutValue(CMD_SETA_UPDATEA, DACValue);
                  break;
          case Y_AXIS:
                  if(_Motor_Inv_Y == true)
                     DACValue = map(force,-255,255,DAC_MAX, DAC_MIN); 
                     else{
+                    outPutValue(CMD_SETB_UPDATEB, Zero_Speed);
                     DACValue = map(force,-255,255,DAC_MIN,DAC_MAX);}
-                
+                    delay(_Motor_Dir_Delay);
                     outPutValue(CMD_SETB_UPDATEB, DACValue);
                 break;
          default:

@@ -30,6 +30,7 @@
 #define SERVO_ON_Y          31
 #define DAC_SCALE       4095
 #define ADC_SCALE       4095
+#define MOTOR_DIR_DELAY     10;
 
 #else
 
@@ -58,12 +59,6 @@
 #define ANALOG_RX           A0
 #define ANALOG_RY           A1
 #define DEBOUNCE_TIME       50
-
-#define PID_OUTPUT_LIMIT    100
-#define PID_SAMPLE_TIME     1
-#define KP      2
-#define KI      0.5
-#define KD      0.05
 
  struct Axis{
     uint32_t cPR;
@@ -100,8 +95,9 @@ class YokeConfig {
         YokeConfig(void);
         void SetDefaults(void);
         ~YokeConfig(void);
-        bool Motor_Inv_X = false;
-        bool Motor_Inv_Y = false;
+        //bool Motor_Inv_X = false;
+        //bool Motor_Inv_Y = false;
+        //int16_t Motor_DIR_delay;
 };
 
 #endif

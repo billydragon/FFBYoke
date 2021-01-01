@@ -3,7 +3,7 @@
 #include "Arduino.h"
 #include "Joystick.h"
 
-
+#define ADDR_RESET_FLAG				0					
 #define ADDR_GAINS_START			4		//(ADDR_OFFSET_X + 4)				
 #define ADDR_GAINS_LEN				26		// 13 *2
 #define ADDR_PIDS_START				34		//(ADDR_GAINS_START + ADDR_GAINS_LEN)
@@ -60,7 +60,7 @@ typedef union
 
 typedef union 
 {
-	struct _GAIN
+	struct //_GAIN
 	{
 		byte totalGain;         
 		byte constantGain;    
@@ -75,26 +75,26 @@ typedef union
 		byte inertiaGain;     
 		byte frictionGain;      
 		byte customGain;     
-	}gain;
-	byte ToBytes[13];
+	};//gain;
+	byte ToArray[13];
 }GainsConfig;
 
 typedef union 
 {
-	struct _PID
+	struct //_PID
 	{
 	float MaxOutput;
 	float SampleTime;
 	float Kp;
 	float Ki;
-	float Fd;
-	}pid;
-	float ToFloat[5];
+	float Kd;
+	};//pid;
+	float ToArray[5];
 }PidsConfig;
 
 typedef union 
 {
-	struct CONTROL
+	struct //FLAG_BIT
 	{
 		bool Motor_Inv_X;
 		bool Motor_Inv_Y;
@@ -104,9 +104,26 @@ typedef union
 		bool Reserv_2;
 		bool Reserv_3;
 		bool Reserv_4;
-	}ctrl;
+	};
 	byte ToByte;
-} System_Control;
+} Ctrl_Flag;
+
+typedef union
+{
+	struct //CTRL_BYTE
+	{
+		byte Byte_Flags;
+		byte Motor_Dir_Delay;
+		byte Reserve1;
+		byte Reserve2;
+		byte Reserve3;
+		byte Reserve4;
+		byte Reserve5;
+		byte Reserve6;
+	};
+	byte ToArray[8];
+}System_Config;
+
 
 
 
@@ -132,12 +149,14 @@ private:
         void receive_Gains();
         void receive_Pids();
         void receive_Sys_control();
-		bool first_run = true;
+		byte first_run = 0;
+		byte Reset_Flag = 0;
 		
 public:
     GainsConfig _Gains[2];
 	PidsConfig _Pids[2];
-	System_Control _SysCtrl;
+	System_Config _SysConfig;
+	Ctrl_Flag Flags;
     ConfigManager();
     ~ConfigManager();
 	void begin();		

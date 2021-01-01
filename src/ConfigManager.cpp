@@ -10,10 +10,11 @@
 DATA_TYPE data_type;
 COMMAND_TYPE command_type;
 COMMAND_HEADER CMD;
+
 const GainsConfig default_Gains[]={GainsConfig{100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100},
                                   GainsConfig{100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100}};
 const PidsConfig default_Pids[]={PidsConfig{255,1,2,0.5,0.01},PidsConfig{255,1,2,0.5,0.01}};
-const System_Control default_SysCtrl = System_Control{0,0,0,0,0,0,0,0};
+const System_Config default_SysConfig = System_Config{0,0,0,0,0,0,0,0};
 
 
 
@@ -27,21 +28,30 @@ long i = Serial.write((byte *) &valuebt, sizeof(valuebt));
 
 ConfigManager::ConfigManager()
 {
-  first_run = true;
+
+  EEPROM_readAnything(ADDR_RESET_FLAG,Reset_Flag);
+  if(Reset_Flag == 1)
+      first_run = 1;
+      else
+      {
+        first_run =0;
+      }
+      
 }
 
 void ConfigManager::begin() 
 {
       
-      if(first_run == true)
+      if(first_run == 1)
       {
         EEPROM_readAnything(ADDR_GAINS_START,_Gains);
         
         EEPROM_readAnything(ADDR_PIDS_START,_Pids);
       
-        EEPROM_readAnything(ADDR_START_SYSCONTROL,_SysCtrl.ToByte); 
+        EEPROM_readAnything(ADDR_START_SYSCONTROL,_SysConfig.ToArray); 
+        Flags.ToByte = _SysConfig.Byte_Flags;
       
-        first_run = false;
+        first_run = 0;
       }
       
 }
@@ -62,27 +72,13 @@ void ConfigManager::send_gains(byte dt)
             CMD.Start_Index = j;
             CMD.Lenght = 1;
             _writeAnything(CMD.toBytes);
-            _writeAnything(_Gains[i].ToBytes[j]);   
+            _writeAnything(_Gains[i].ToArray[j]);   
             //delay(20);
           }
           
         }
 }
 
-void ConfigManager::send_sys_control(byte dt)
-{
-            //byte cmd[3];
-            CMD.Command = command_type.Read_Memory;
-            CMD.Data_Type = dt;
-            CMD.Axis = 0;
-            CMD.Start_Index = 0;
-            CMD.Lenght  = 1;
-            _writeAnything(CMD.toBytes);
-            _writeAnything(_SysCtrl.ToByte);
-            
-            //delay(20);
-      
-}
 
 void ConfigManager::send_Pids(byte dt)
 {
@@ -94,12 +90,31 @@ void ConfigManager::send_Pids(byte dt)
             CMD.Data_Type = dt;
             CMD.Axis=i;
             CMD.Start_Index = j;
-            CMD.Lenght = 4;
+            CMD.Lenght = sizeof(float);
               _writeAnything(CMD.toBytes); 
-              _writeAnything(_Pids[i].ToFloat[j]);
+              _writeAnything(_Pids[i].ToArray[j]);
               //delay(20);
           }
         }
+}
+
+
+void ConfigManager::send_sys_control(byte dt)
+{
+           _SysConfig.Byte_Flags = Flags.ToByte;
+          for(int j = 0 ; j < 8 ; j++)
+          {
+            //byte cmd[3];
+            CMD.Command = command_type.Read_Memory;
+            CMD.Data_Type = dt;
+            CMD.Axis = 0;
+            CMD.Start_Index = j;
+            CMD.Lenght  = 1;
+            _writeAnything(CMD.toBytes);
+            _writeAnything(_SysConfig.ToArray[j]);
+            
+            }
+      
 }
 
 void ConfigManager::receive_Gains()
@@ -112,7 +127,7 @@ void ConfigManager::receive_Gains()
           for(int i = 0; i < (cmdlen); i++)
           {
                 byte c = (byte)Serial.read();
-                _Gains[idx].ToBytes[pos + i] = c;
+                _Gains[idx].ToArray[pos + i] = c;
 
           }
 }
@@ -132,17 +147,24 @@ void ConfigManager::receive_Pids()
             f_union.uiBytes[2] = Serial.read();
             f_union.uiBytes[3] = Serial.read();
 
-            _Pids[idx].ToFloat[pos + i] = f_union.fValue;
+            _Pids[idx].ToArray[pos + i] = f_union.fValue;
                  
           }
 }
 
 void ConfigManager::receive_Sys_control()
-{
+{     
+      delay(20);
       byte idx = Serial.read();           // 3 Axis index
       byte pos = Serial.read();           // 4
       byte cmdlen = Serial.read();        // 5  lenght of data  
-      _SysCtrl.ToByte = Serial.read();
+     
+        for(int j=0; j < cmdlen ; j++)
+        {  
+            byte c = (byte)Serial.read();
+          _SysConfig.ToArray[pos + j] = c;
+        }
+      Flags.ToByte = _SysConfig.Byte_Flags;
 
 }
 
@@ -202,6 +224,7 @@ void ConfigManager::GetUpdate()
                             receive_Gains();  
                             receive_Pids();
                             receive_Sys_control();
+                            
                 break;
                 default:
                 break;
@@ -227,7 +250,8 @@ void ConfigManager::GetUpdate()
                      // memcpy(_pids,uPids,sizeof(_pids));
               break;
               case data_type.System_Eeprom:
-                    EEPROM_writeAnything(ADDR_START_SYSCONTROL,_SysCtrl.ToByte ); 
+                    _SysConfig.Byte_Flags = Flags.ToByte;
+                    EEPROM_writeAnything(ADDR_START_SYSCONTROL,_SysConfig.ToArray ); 
                     delay(10);
                     //_sys_ctr = uSysControl;
 
@@ -237,7 +261,8 @@ void ConfigManager::GetUpdate()
                     delay(10); 
                     EEPROM_writeAnything(ADDR_PIDS_START,_Pids);
                     delay(10);
-                    EEPROM_writeAnything(ADDR_START_SYSCONTROL,_SysCtrl.ToByte ); 
+                    _SysConfig.Byte_Flags = Flags.ToByte;
+                    EEPROM_writeAnything(ADDR_START_SYSCONTROL,_SysConfig.ToArray ); 
                     delay(10);
                     
 
@@ -264,19 +289,21 @@ void ConfigManager::GetUpdate()
                           send_Pids(dtype);
                     break; 
                     case data_type.System_Eeprom:
-                          EEPROM_readAnything(ADDR_START_SYSCONTROL,_SysCtrl.ToByte); 
+                          EEPROM_readAnything(ADDR_START_SYSCONTROL,_SysConfig.ToArray); 
+                          Flags.ToByte = _SysConfig.Byte_Flags;  
                           send_sys_control(dtype); 
                     case data_type.All_Eeprom:
-                         //load_all_eeprom();
-                         EEPROM_readAnything(ADDR_GAINS_START,_Gains);
-                         //delay(20);
-                         send_gains(data_type.Gains_Eeprom);
-                        EEPROM_readAnything(ADDR_PIDS_START,_Pids);
-                        //delay(20);
-                        send_Pids(data_type.Pids_Eeprom);
-                        EEPROM_readAnything(ADDR_START_SYSCONTROL,_SysCtrl.ToByte); 
-                        //delay(20);
-                        send_sys_control(data_type.System_Eeprom);
+                          //load_all_eeprom();
+                          EEPROM_readAnything(ADDR_GAINS_START,_Gains);
+                          //delay(20);
+                          send_gains(data_type.Gains_Eeprom);
+                          EEPROM_readAnything(ADDR_PIDS_START,_Pids);
+                          //delay(20);
+                          send_Pids(data_type.Pids_Eeprom);
+                          EEPROM_readAnything(ADDR_START_SYSCONTROL,_SysConfig.ToArray); 
+                          //delay(20);
+                          Flags.ToByte = _SysConfig.Byte_Flags;  
+                          send_sys_control(data_type.System_Eeprom);
                          
                     break;
                     break;  
@@ -299,8 +326,15 @@ void ConfigManager::GetUpdate()
                               memcpy(_Pids, default_Pids,sizeof(default_Pids));
                               //delay(20);  
                               send_Pids(data_type.Pids_Memory);
-                              _SysCtrl = default_SysCtrl;
+                              //memcpy(_SysConfig.Byte_Flags, default_SysConfig.Byte_Flags,sizeof(default_SysConfig.Byte_Flags));  
+                               for(int i = 0; i < 8 ; i++)
+                               {
+                                 _SysConfig.ToArray[i] = default_SysConfig.ToArray[i];
+                               }
+                               Flags.ToByte = default_SysConfig.Byte_Flags;                          
                               send_sys_control(data_type.System_Memory);
+                              EEPROM_writeAnything(ADDR_RESET_FLAG,1);
+
                               
                         break; 
                         
