@@ -8,7 +8,7 @@
 #define ADDR_GAINS_LEN				26		// 13 *2
 #define ADDR_PIDS_START				34		//(ADDR_GAINS_START + ADDR_GAINS_LEN)
 #define ADDR_PIDS_LEN				40		//(4 * 5) *2	sizeof(float) 4Byte * 5 
-#define ADDR_START_SYSCONTROL		78		//(ADDR_PIDS_START + ADDR_PIDS_LEN)
+#define ADDR_START_SYSCONFIG		78		//(ADDR_PIDS_START + ADDR_PIDS_LEN)
 #define ADDR_SYSCONTROL_LEN			8		//
 
 typedef struct 
@@ -143,12 +143,22 @@ class ConfigManager
 {
 private:
         
-        void send_gains(byte dt);
-        void send_sys_control(byte dt);
+        void send_Gains(byte dt);
+        void send_SysConfig(byte dt);
         void send_Pids(byte dt);
         void receive_Gains();
         void receive_Pids();
-        void receive_Sys_control();
+        void receive_SysConfig();
+		void Reset_to_Default();
+		void Read_Gains_EEPROM();
+		void Read_Pids_EEPROM();
+		void Read_SysConfig_EEPROM();
+		void Read_All_EEPROM();	
+		void Write_Gains_EEPROM();
+		void Write_Pids_EEPROM();
+		void Write_SysConfig_EEPROM();
+		void Write_All_EEPROM();
+		
 		byte first_run = 0;
 		byte Reset_Flag = 0;
 		
@@ -159,6 +169,7 @@ public:
 	Ctrl_Flag Flags;
     ConfigManager();
     ~ConfigManager();
+	
 	void begin();		
     void GetUpdate();
 };
