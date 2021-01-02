@@ -5,10 +5,9 @@
 #include "ConfigManager.h"
 #include "PID_V2.h"
 
-
-#ifdef _VARIANT_ARDUINO_DUE_X_
+//#ifdef _VARIANT_ARDUINO_DUE_X_
 #define Serial  SerialUSB
-#endif
+//#endif
 
 #define USING_DAC
 
@@ -16,8 +15,10 @@
 #include "DAC8563.h"
 DAC8563 pwm=DAC8563(CS_PIN);
 #else
-#include "PWM.h"
-_Pwm pwm;
+   
+#include "DuePWM.h"
+DuePWM pwm(PWM_FREQ1,PWM_FREQ2);
+
 #endif
 
 #include "QEncoder.h"
@@ -102,7 +103,13 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(encoderPin_YB), calculateEncoderPostion_Y, CHANGE); 
   */ 
   delay(200);
+  #ifdef USING_DAC
   pwm.begin(CfgManager);
+  #else
+  //DuePWM::pinFreq1( uint32_t pin ) // pin must be 6 through 9
+  DuePWM::pinFreq2(PWM_PIN_X); // pin must be 6 through 9
+  DuePWM::pinFreq2(PWM_PIN_Y); // pin must be 6 through 9
+  #endif
   //delay(200);
   pwm.setPWM(X_AXIS,0);  
   pwm.setPWM(Y_AXIS,0);

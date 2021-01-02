@@ -22,6 +22,12 @@
 
 #define PUSH_BUTTON_01       A5
 
+#define PWM_FREQ1           10000
+#define PWM_FREQ2           20000
+
+#define DUE_PWM_SCALE       255
+#define PWM_PIN_X           6
+#define PWM_PIN_Y           7
 #define PWM_X               DAC0
 #define PWM_Y               DAC1
 #define Dir_X               28
