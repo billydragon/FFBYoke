@@ -22,7 +22,7 @@ class Due_QDEC {
     Due_QDEC(void);
     ~Due_QDEC(void);
     Axis axis[2];
-    void setConfig(YokeConfig yokeConfig);
+    void setConfig();
     void initVariables(void);
     void updatePosition(int idx);
     

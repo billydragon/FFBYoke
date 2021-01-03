@@ -5,24 +5,31 @@
 #include "ConfigManager.h"
 #include "PID_V2.h"
 
+
 //#ifdef _VARIANT_ARDUINO_DUE_X_
 #define Serial  SerialUSB
 //#endif
 
 #define USING_DAC
+#define DUE_QDEC
+
 
 #ifdef USING_DAC
 #include "DAC8563.h"
 DAC8563 pwm=DAC8563(CS_PIN);
 #else
-   
 #include "DuePWM.h"
 DuePWM pwm(PWM_FREQ1,PWM_FREQ2);
-
 #endif
 
+#ifdef DUE_QDEC
+#include "Due_QDEC.h"
+Due_QDEC encoder;
+#else
 #include "QEncoder.h"
 QEncoder encoder; 
+#endif
+
 
 int32_t xy_force[2] = {0,0};
  //int32_t last_xy_force[2] = {0,0};
@@ -116,6 +123,8 @@ void setup() {
   pwm.servo_off(X_AXIS);
   pwm.servo_off(Y_AXIS);
   initialRun = CfgManager.Flags.Auto_Calibration;
+  
+
   // yokeConfig.Motor_Inv_X = CfgManager._SysConfig.Flag.Motor_Inv_X;
   // yokeConfig.Motor_Inv_Y = CfgManager._SysConfig.Flag.Motor_Inv_Y;
 

@@ -88,7 +88,7 @@ void DAC8563::setPWM(int idx, int32_t force)
 
  void DAC8563::servo_on(int idx)
 {
-	if(idx == 0)
+	if(idx == X_AXIS)
 	{ 
 		digitalWriteFast(SERVO_ON_X,HIGH);
 	}
@@ -100,7 +100,7 @@ void DAC8563::setPWM(int idx, int32_t force)
 
 void DAC8563::servo_off(int idx)
 {
-	if(idx == 0)
+	if(idx == X_AXIS)
 	{ 
 		digitalWriteFast(SERVO_ON_X,LOW);
 	}

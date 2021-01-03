@@ -64,7 +64,7 @@ void Due_QDEC::activateCNT_TC2() // Y Axis
 }
 
 
-void Due_QDEC::setConfig(YokeConfig YokeConfig) {
+void Due_QDEC::setConfig() {
   
   axis[X_AXIS].maxValue = MAX_X_VALUE;
   axis[X_AXIS].minValue =  - axis[X_AXIS].maxValue;
@@ -130,7 +130,6 @@ void Due_QDEC::Reset_Encoder(int idx)
   
    
 }
-
 
 
 Due_QDEC::~Due_QDEC() {
