@@ -62,11 +62,10 @@ class DAC8563
   private:
     uint8_t _cs_pin;
     float   _vref;
-    bool _Motor_Inv_X = false;
-    bool _Motor_Inv_Y = false;
-    int _Motor_Dir_Delay = 0;
-    int16_t Zero_Speed = 0;
-
+    uint8_t _Motor_Inv_X = 0;
+    uint8_t _Motor_Inv_Y = 0;
+    uint8_t _Motor_Dir_Delay = 0;
+  
   public:
     DAC8563();
     DAC8563(uint8_t cs_pin);

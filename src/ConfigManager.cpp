@@ -7,16 +7,16 @@
 #define Serial  SerialUSB
 #endif
 
+const GAINS_CONFIG default_Gains[]  ={GAINS_CONFIG{100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100},
+                                  GAINS_CONFIG{100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100}};
+const PIDS_CONFIG default_Pids[]  ={PIDS_CONFIG{255,1,2,0.5,0.01},PIDS_CONFIG{255,1,2,0.5,0.01}};
+const SYSTEM_CONFIGS default_SysConfig  = SYSTEM_CONFIGS{0,0,1,1,0,0,0,0};
+
+byte first_run = 0;
+byte Reset_Flag = 0;
 DATA_TYPE data_type;
-COMMAND_TYPE command_type;
-COMMAND_HEADER CMD;
-
-const GainsConfig default_Gains[]={GainsConfig{100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100},
-                                  GainsConfig{100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100}};
-const PidsConfig default_Pids[]={PidsConfig{255,1,2,0.5,0.01},PidsConfig{255,1,2,0.5,0.01}};
-const System_Config default_SysConfig = System_Config{0,0,0,0,0,0,0,0};
-
-
+COMMAND_TYPE cmd_type;
+COMMANDS cmd;
 
 template <class T> long int _writeAnything(T& valuebt)
 {
@@ -28,26 +28,18 @@ long i = Serial.write((byte *) &valuebt, sizeof(valuebt));
 
 ConfigManager::ConfigManager()
 {
-
   EEPROM_readAnything(ADDR_RESET_FLAG,Reset_Flag);
   if(Reset_Flag != 1)
   {
     Reset_to_Default();
-    Write_All_EEPROM();
-    first_run = 0;
-  }
-  else
-  {
-    first_run = 1;
+    Write_All_EEPROM(); 
   }
   
-      
-      
+    first_run = 1;    
 }
 
 void ConfigManager::begin() 
-{
-      
+{     
       if(first_run == 1)
       {
         Read_All_EEPROM();
@@ -64,15 +56,15 @@ void ConfigManager::send_Gains(byte dt)
 {
   for (int i = 0; i < 2; i++)
         {
-          for (int j = 0; j < 13; j++)
+          for (uint8_t j = 0; j < sizeof(GAINS); j++)
           {
-            CMD.Command = command_type.Read_Memory;
-            CMD.Data_Type = dt;
-            CMD.Axis=i;
-            CMD.Start_Index = j;
-            CMD.Lenght = 1;
-            _writeAnything(CMD.toBytes);
-            _writeAnything(_Gains[i].ToArray[j]);   
+            cmd.Header.Command = (uint8_t)cmd_type.Read_Memory;
+            cmd.Header.Data_Type = dt;
+            cmd.Header.Axis=i;
+            cmd.Header.Start_Index = j;
+            cmd.Header.Lenght = 1;
+            _writeAnything(cmd.cmd_Bytes);
+            _writeAnything(_Gains[i].GainsArray[j]);   
             //delay(20);
           }
           
@@ -84,15 +76,15 @@ void ConfigManager::send_Pids(byte dt)
 {
   for (int i = 0; i < 2; i++)
         {
-          for (int j = 0; j < 5; j++)
+          for (uint8_t j = 0; j < (sizeof(PIDS)/4); j++)
           {
-            CMD.Command = command_type.Read_Memory;
-            CMD.Data_Type = dt;
-            CMD.Axis=i;
-            CMD.Start_Index = j;
-            CMD.Lenght = sizeof(float);
-              _writeAnything(CMD.toBytes); 
-              _writeAnything(_Pids[i].ToArray[j]);
+            cmd.Header.Command = (uint8_t)cmd_type.Read_Memory;
+            cmd.Header.Data_Type = dt;
+            cmd.Header.Axis =i;
+            cmd.Header.Start_Index = j;
+            cmd.Header.Lenght = sizeof(float);
+              _writeAnything(cmd.cmd_Bytes); 
+              _writeAnything(_Pids[i].PidsArray[j]);
               //delay(20);
           }
         }
@@ -101,17 +93,17 @@ void ConfigManager::send_Pids(byte dt)
 
 void ConfigManager::send_SysConfig(byte dt)
 {
-           _SysConfig.Byte_Flags = Flags.ToByte;
-          for(int j = 0 ; j < 8 ; j++)
+           //_SysConfig.Byte_Flags = Flags.ToByte;
+          for(uint8_t j = 0 ; j < sizeof(CONFIG) ; j++)
           {
             //byte cmd[3];
-            CMD.Command = command_type.Read_Memory;
-            CMD.Data_Type = dt;
-            CMD.Axis = 0;
-            CMD.Start_Index = j;
-            CMD.Lenght  = 1;
-            _writeAnything(CMD.toBytes);
-            _writeAnything(_SysConfig.ToArray[j]);
+            cmd.Header.Command = cmd_type.Read_Memory;
+            cmd.Header.Data_Type = dt;
+            cmd.Header.Axis = 0;
+            cmd.Header.Start_Index = j;
+            cmd.Header.Lenght  = 1;
+            _writeAnything(cmd.cmd_Bytes);
+            _writeAnything(_SysConfig.ToByteArray[j]);
             
             }
       
@@ -124,10 +116,10 @@ void ConfigManager::receive_Gains()
     byte  pos = Serial.read();                  // 4 Position
     byte  cmdlen = Serial.read();         // 5 lenght of data
          
-          for(int i = 0; i < (cmdlen); i++)
+          for(uint8_t i = 0; i < (cmdlen); i++)
           {
                 byte c = (byte)Serial.read();
-                _Gains[idx].ToArray[pos + i] = c;
+                _Gains[idx].GainsArray[pos + i] = c;
 
           }
 }
@@ -139,7 +131,7 @@ void ConfigManager::receive_Pids()
     byte pos = Serial.read();           // 4
     byte cmdlen = Serial.read();        // 5  lenght of data  
           
-            for(int i = 0; i < (cmdlen/4); i++)
+            for(uint8_t i = 0; i < (cmdlen/4); i++)
           {
             float_union f_union;
             f_union.uiBytes[0] = Serial.read();
@@ -147,7 +139,7 @@ void ConfigManager::receive_Pids()
             f_union.uiBytes[2] = Serial.read();
             f_union.uiBytes[3] = Serial.read();
 
-            _Pids[idx].ToArray[pos + i] = f_union.fValue;
+            _Pids[idx].PidsArray[pos + i] = f_union.fValue;
                  
           }
 }
@@ -161,12 +153,13 @@ void ConfigManager::receive_SysConfig()
       byte pos = Serial.read();           // 4
       byte cmdlen = Serial.read();        // 5  lenght of data  
      
-        for(int j=0; j < cmdlen ; j++)
+        for(uint8_t j=0; j < cmdlen ; j++)
         {  
             byte c = (byte)Serial.read();
-          _SysConfig.ToArray[pos + j] = c;
+          _SysConfig.ToByteArray[pos + j] = c;
         }
-      Flags.ToByte = _SysConfig.Byte_Flags;
+
+      //Flags.ToByte = _SysConfig.Byte_Flags;
 
 }
 
@@ -189,8 +182,8 @@ void ConfigManager::Read_Pids_EEPROM()
 
 void ConfigManager::Read_SysConfig_EEPROM()
 {
-     EEPROM_readAnything(ADDR_START_SYSCONFIG,_SysConfig.ToArray); 
-        Flags.ToByte = _SysConfig.Byte_Flags;
+     EEPROM_readAnything(ADDR_START_SYSCONFIG,_SysConfig.ToByteArray); 
+        //Flags.ToByte = _SysConfig.Byte_Flags;
 }
 
 void ConfigManager::Write_Gains_EEPROM()
@@ -207,8 +200,8 @@ void ConfigManager::Write_Pids_EEPROM()
 
 void ConfigManager::Write_SysConfig_EEPROM()
 {
-    _SysConfig.Byte_Flags = Flags.ToByte;
-    EEPROM_writeAnything(ADDR_START_SYSCONFIG,_SysConfig.ToArray ); 
+    //_SysConfig.Byte_Flags = Flags.ToByte;
+    EEPROM_writeAnything(ADDR_START_SYSCONFIG,_SysConfig.ToByteArray ); 
     delay(10);
 }
 
@@ -224,13 +217,9 @@ void ConfigManager::Reset_to_Default()
 {
         memcpy(_Gains, default_Gains,sizeof(default_Gains)); 
         memcpy(_Pids, default_Pids,sizeof(default_Pids));
-          for(int i = 0; i < 8 ; i++)
-          {
-            _SysConfig.ToArray[i] = default_SysConfig.ToArray[i];
-          }
-          Flags.ToByte = default_SysConfig.Byte_Flags;                          
+        memcpy((byte*)&_SysConfig, (byte *)&default_SysConfig,sizeof(SYSTEM_CONFIGS));
         
-          EEPROM_writeAnything(ADDR_RESET_FLAG,1);  //Set Flag Reset
+        EEPROM_writeAnything(ADDR_RESET_FLAG,1);  //Set Flag Reset
 
 }
 
@@ -244,7 +233,7 @@ void ConfigManager::GetUpdate()
   {
     delay(20);
       cmd = Serial.read();
-    if(cmd == command_type.Read_Memory )  //Read from Memory settings
+    if(cmd == cmd_type.Read_Memory )  //Read from Memory settings
     {
        dtype = Serial.read();
         switch (dtype)
@@ -271,7 +260,7 @@ void ConfigManager::GetUpdate()
             }
     }
 
-    if (cmd == command_type.Write_Memory)  //Write to Memory settings         
+    if (cmd == cmd_type.Write_Memory)  //Write to Memory settings         
     {
         dtype = Serial.read();    //2
           switch (dtype)
@@ -298,7 +287,7 @@ void ConfigManager::GetUpdate()
             
     }
 
-    if (cmd == command_type.Save_Eeprom)   // Save to EEPROM
+    if (cmd == cmd_type.Save_Eeprom)   // Save to EEPROM
     {
       
       dtype = Serial.read();    //2
@@ -323,7 +312,7 @@ void ConfigManager::GetUpdate()
             }
     }
 
-    if (cmd == command_type.Load_Eeprom)  //Load from EEPROM
+    if (cmd == cmd_type.Load_Eeprom)  //Load from EEPROM
     {
       
           dtype = Serial.read();
@@ -351,7 +340,7 @@ void ConfigManager::GetUpdate()
 
             }
     }
-    if (cmd == command_type.Control)  //Load from EEPROM
+    if (cmd == cmd_type.Control)  //Load from EEPROM
     {
             dtype = Serial.read();
                   switch(dtype)

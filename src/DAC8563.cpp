@@ -46,10 +46,9 @@ void DAC8563::begin(ConfigManager cfg_mangager )
   SPI.setBitOrder(MSBFIRST);
   #endif
   initialize();
-  _Motor_Inv_X = cfg_mangager.Flags.Motor_Inv_X;
-  _Motor_Inv_Y = cfg_mangager.Flags.Motor_Inv_Y;
-  _Motor_Dir_Delay = cfg_mangager._SysConfig.Motor_Dir_Delay;
-  Zero_Speed = map(0,-255,255,DAC_MIN,DAC_MAX);
+  _Motor_Inv_X = cfg_mangager._SysConfig.Byte.Motor_Inv_X;
+  _Motor_Inv_Y = cfg_mangager._SysConfig.Byte.Motor_Inv_Y;
+  _Motor_Dir_Delay = cfg_mangager._SysConfig.Byte.Motor_Dir_Delay;
   //Debug
  // SerialUSB.println("Init SPI Done.");
   //delay(1000);
@@ -58,24 +57,26 @@ void DAC8563::begin(ConfigManager cfg_mangager )
 void DAC8563::setPWM(int idx, int32_t force)
  {
         uint16_t DACValue = 0;
-        
+        uint16_t zeroPWM = map(0,-255,255,DAC_MAX,DAC_MIN);
          switch (idx)
          {
          case X_AXIS:
-                if(_Motor_Inv_X == true)
+                if(_Motor_Inv_X == 1)
                     DACValue = map(force,-255,255,DAC_MAX,DAC_MIN);
                 else{
-                    DACValue = map(force,-255,255,DAC_MIN,DAC_MAX); }
-                    outPutValue(CMD_SETA_UPDATEA, Zero_Speed);
+                    DACValue = map(force,-255,255,DAC_MIN,DAC_MAX); 
+                    }
+                    outPutValue(CMD_SETA_UPDATEA, zeroPWM);
                     delay(_Motor_Dir_Delay);
                     outPutValue(CMD_SETA_UPDATEA, DACValue);
                  break;
          case Y_AXIS:
-                 if(_Motor_Inv_Y == true)
+                 if(_Motor_Inv_Y == 1)
                     DACValue = map(force,-255,255,DAC_MAX, DAC_MIN); 
-                    else{
-                    outPutValue(CMD_SETB_UPDATEB, Zero_Speed);
-                    DACValue = map(force,-255,255,DAC_MIN,DAC_MAX);}
+                    else{            
+                    DACValue = map(force,-255,255,DAC_MIN,DAC_MAX);
+                    }
+                    outPutValue(CMD_SETB_UPDATEB, zeroPWM);
                     delay(_Motor_Dir_Delay);
                     outPutValue(CMD_SETB_UPDATEB, DACValue);
                 break;

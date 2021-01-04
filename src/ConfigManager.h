@@ -1,9 +1,9 @@
 #ifndef CONFIGMANAGER_h
 #define CONFIGMANAGER_h
 #include "Arduino.h"
-#include "Joystick.h"
+//#include "Joystick.h"
 
-#define ADDR_RESET_FLAG				0					
+#define ADDR_RESET_FLAG				2					
 #define ADDR_GAINS_START			4		//(ADDR_OFFSET_X + 4)				
 #define ADDR_GAINS_LEN				26		// 13 *2
 #define ADDR_PIDS_START				34		//(ADDR_GAINS_START + ADDR_GAINS_LEN)
@@ -11,125 +11,115 @@
 #define ADDR_START_SYSCONFIG		78		//(ADDR_PIDS_START + ADDR_PIDS_LEN)
 #define ADDR_SYSCONTROL_LEN			8		//
 
-typedef struct 
+struct DATA_TYPE 
 {
-enum : byte
-		{
-			Gains_Memory = 0x01,
-			Pids_Memory,
-			System_Memory,
-			All_Memory,
-			Gains_Eeprom,
-			Pids_Eeprom,
-			System_Eeprom,
-			All_Eeprom,
-			Control_CMD,
-			Reset_Default
-		};
-}DATA_TYPE;
-
-
-typedef struct 
-{
-		enum : byte
-		{
-			Read_Memory = 0x10,
-			Write_Memory,
-			Load_Eeprom,
-			Save_Eeprom,
-			Control
-			
-		};
-
-}COMMAND_TYPE;
-
-
-typedef union 
-{
-	struct
+	enum : uint8_t
 	{
-		byte Command;
-		byte Data_Type;
-		byte Axis;
-		byte Start_Index;
-		byte Lenght;
+		Gains_Memory = 0x01,
+		Pids_Memory,
+		System_Memory,
+		All_Memory,
+		Gains_Eeprom,
+		Pids_Eeprom,
+		System_Eeprom,
+		All_Eeprom,
+		Control_CMD,
+		Reset_Default
 	};
-	byte toBytes[5];
-}COMMAND_HEADER;
+};
 
-
-typedef union 
+struct COMMAND_TYPE 
 {
-	struct //_GAIN
+	enum : uint8_t
 	{
-		byte totalGain;         
-		byte constantGain;    
-		byte rampGain;          
-		byte squareGain;        
-		byte sineGain;        
-		byte triangleGain;     
-		byte sawtoothdownGain;  
-		byte sawtoothupGain;   
-		byte springGain;        
-		byte damperGain; 
-		byte inertiaGain;     
-		byte frictionGain;      
-		byte customGain;     
-	};//gain;
-	byte ToArray[13];
-}GainsConfig;
+		Read_Memory = 0x10,
+		Write_Memory,
+		Load_Eeprom,
+		Save_Eeprom,
+		Control
+	};
 
-typedef union 
+};
+
+struct COMMAND_HEADER
 {
-	struct //_PID
-	{
+	uint8_t Command;
+	uint8_t Data_Type;
+	uint8_t Axis;
+	uint8_t Start_Index;
+	uint8_t Lenght;
+};
+
+union COMMANDS
+{
+	COMMAND_HEADER Header;
+	uint8_t cmd_Bytes[sizeof(COMMAND_HEADER)];
+};
+
+
+struct GAINS
+{
+	uint8_t totalGain;         
+	uint8_t constantGain;    
+	uint8_t rampGain;          
+	uint8_t squareGain;        
+	uint8_t sineGain;        
+	uint8_t triangleGain;     
+	uint8_t sawtoothdownGain;  
+	uint8_t sawtoothupGain;   
+	uint8_t springGain;        
+	uint8_t damperGain; 
+	uint8_t inertiaGain;     
+	uint8_t frictionGain;      
+	uint8_t customGain;     
+};
+
+union GAINS_CONFIG
+{
+	GAINS gain;
+	uint8_t GainsArray[sizeof(GAINS)];
+};
+
+
+struct PIDS
+{
 	float MaxOutput;
 	float SampleTime;
 	float Kp;
 	float Ki;
 	float Kd;
-	};//pid;
-	float ToArray[5];
-}PidsConfig;
-
-typedef union 
+};//pid;
+	
+union PIDS_CONFIG
 {
-	struct //FLAG_BIT
-	{
-		bool Motor_Inv_X;
-		bool Motor_Inv_Y;
-		bool Swap_XY_Forces;
-		bool Auto_Calibration;
-		bool Reserv_1;
-		bool Reserv_2;
-		bool Reserv_3;
-		bool Reserv_4;
-	};
-	byte ToByte;
-} Ctrl_Flag;
+	PIDS pid;
+	float PidsArray[sizeof(PIDS)];
+};
 
-typedef union
+struct CONFIG
 {
-	struct //CTRL_BYTE
-	{
-		byte Byte_Flags;
-		byte Motor_Dir_Delay;
-		byte Reserve1;
-		byte Reserve2;
-		byte Reserve3;
-		byte Reserve4;
-		byte Reserve5;
-		byte Reserve6;
-	};
-	byte ToArray[8];
-}System_Config;
+		uint8_t Motor_Inv_X;
+		uint8_t Motor_Inv_Y;
+		uint8_t Swap_XY_Force;
+		uint8_t Auto_Calibration;
+		uint8_t Motor_Dir_Delay;
+		uint8_t Reserve1;
+		uint8_t Reserve2;
+		uint8_t Reserve3;
+		
+};
 
+union SYSTEM_CONFIGS
+{
+	CONFIG Byte;
+	uint8_t ToByteArray[sizeof(CONFIG)];
+};
 
 
 
 union int32_union
 {
-    uint8_t     uiBytes[sizeof( int32_t )];
+    uint8_t     uiBytes[sizeof(int32_t)];
     uint32_t     ui32Value;
 };
 
@@ -158,22 +148,16 @@ private:
 		void Write_Pids_EEPROM();
 		void Write_SysConfig_EEPROM();
 		void Write_All_EEPROM();
-		
-		byte first_run = 0;
-		byte Reset_Flag = 0;
-		
+
 public:
-    GainsConfig _Gains[2];
-	PidsConfig _Pids[2];
-	System_Config _SysConfig;
-	Ctrl_Flag Flags;
+    GAINS_CONFIG _Gains[2];
+	PIDS_CONFIG _Pids[2];
+	SYSTEM_CONFIGS _SysConfig;
     ConfigManager();
     ~ConfigManager();
 	
 	void begin();		
     void GetUpdate();
 };
-
-
 
 #endif
