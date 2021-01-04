@@ -41,8 +41,8 @@ double Setpoint[2], Input[2], Output[2];
  double Ki[2];
  double Kd[2];
 
-PID myPID[] = {PID(&Input[X_AXIS], &Output[X_AXIS], &Setpoint[X_AXIS], Kp[X_AXIS], Ki[X_AXIS], Kd[X_AXIS], DIRECT),
-               PID(&Input[Y_AXIS], &Output[Y_AXIS], &Setpoint[Y_AXIS], Kp[Y_AXIS], Ki[Y_AXIS], Kd[Y_AXIS], DIRECT)}; 
+PID  myPID[2] = {PID(&Input[X_AXIS], &Output[X_AXIS], &Setpoint[X_AXIS], Kp[X_AXIS], Ki[X_AXIS], Kd[X_AXIS], DIRECT),
+                PID(&Input[Y_AXIS], &Output[Y_AXIS], &Setpoint[Y_AXIS], Kp[Y_AXIS], Ki[Y_AXIS], Kd[Y_AXIS], DIRECT)}; 
 
 volatile long debouncing_time = DEBOUNCE_TIME; //Debouncing Time in Milliseconds
 
@@ -96,6 +96,9 @@ void setup() {
   Joystick.begin(true);
   CfgManager.begin();  
   Set_PIDs();  
+  myPID[0] = PID(&Input[X_AXIS], &Output[X_AXIS], &Setpoint[X_AXIS], Kp[X_AXIS], Ki[X_AXIS], Kd[X_AXIS], DIRECT);
+  myPID[1] = PID(&Input[Y_AXIS], &Output[Y_AXIS], &Setpoint[Y_AXIS], Kp[Y_AXIS], Ki[Y_AXIS], Kd[Y_AXIS], DIRECT); 
+
   Buttons.pinNumber = PUSH_BUTTON_01;
   Buttons.CurrentState = HIGH;
   Buttons.LastState = HIGH;
@@ -130,8 +133,7 @@ void setup() {
    {
      initialRun = 1;
    }
-  // yokeConfig.Motor_Inv_X = CfgManager._SysConfig.Flag.Motor_Inv_X;
-  // yokeConfig.Motor_Inv_Y = CfgManager._SysConfig.Flag.Motor_Inv_Y;
+  
 }
 
 void loop() {
@@ -199,8 +201,6 @@ void loop() {
     pwm.setPWM(Y_AXIS,xy_force[Y_AXIS]);
     CalculateMaxSpeedAndMaxAcceleration(Y_AXIS);
     Update_Joystick_Buttons();
-      
-  
   
 }
 
