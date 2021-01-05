@@ -7,10 +7,10 @@
 #define Serial  SerialUSB
 #endif
 
-const GAINS_CONFIG default_Gains[]  ={GAINS_CONFIG{100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100},
-                                  GAINS_CONFIG{100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100}};
-const PIDS_CONFIG default_Pids[]  ={PIDS_CONFIG{255,1,2,0.5,0.01},PIDS_CONFIG{255,1,2,0.5,0.01}};
-const SYSTEM_CONFIGS default_SysConfig  = SYSTEM_CONFIGS{0,0,1,1,0,0,0,0};
+const GAINS_CONFIG default_Gains[]  ={GAINS_CONFIG{50, 50, 50, 50, 50, 50, 50, 50, 50, 10, 10, 10, 10},
+                                  GAINS_CONFIG{50, 50, 50, 50, 50, 50, 50, 50, 50, 10, 10, 10, 10}};
+const PIDS_CONFIG default_Pids[]  ={PIDS_CONFIG{150,1,2,0.5,0.01},PIDS_CONFIG{150,1,2,0.5,0.01}};
+const SYSTEM_CONFIGS default_SysConfig  = SYSTEM_CONFIGS{0,0,1,0,0,0,0,0};
 
 byte first_run = 0;
 byte Reset_Flag = 0;
@@ -56,7 +56,7 @@ void ConfigManager::send_Gains(byte dt)
 {
   for (int i = 0; i < 2; i++)
         {
-          for (uint8_t j = 0; j < sizeof(GAIN); j++)
+          for (uint8_t j = 0; j < sizeof(GAIN_PARAM); j++)
           {
             cmd.Header.Command = (uint8_t)cmd_type.Read_Memory;
             cmd.Header.Data_Type = dt;
@@ -76,7 +76,7 @@ void ConfigManager::send_Pids(byte dt)
 {
   for (int i = 0; i < 2; i++)
         {
-          for (uint8_t j = 0; j < (sizeof(PID)/4); j++)
+          for (uint8_t j = 0; j < (sizeof(PID_PARAM)/4); j++)
           {
             cmd.Header.Command = (uint8_t)cmd_type.Read_Memory;
             cmd.Header.Data_Type = dt;
@@ -94,7 +94,7 @@ void ConfigManager::send_Pids(byte dt)
 void ConfigManager::send_SysConfig(byte dt)
 {
            //_SysConfig.Byte_Flags = Flags.ToByte;
-          for(uint8_t j = 0 ; j < sizeof(CONFIG) ; j++)
+          for(uint8_t j = 0 ; j < sizeof(SYS_PARAM) ; j++)
           {
             //byte cmd[3];
             cmd.Header.Command = cmd_type.Read_Memory;

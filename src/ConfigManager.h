@@ -57,7 +57,7 @@ union COMMANDS
 };
 
 
-struct GAIN
+struct GAIN_PARAM
 {
 	uint8_t totalGain;         
 	uint8_t constantGain;    
@@ -76,12 +76,12 @@ struct GAIN
 
 union GAINS_CONFIG
 {
-	GAIN Gain;
-	uint8_t GainsArray[sizeof(GAIN)];
+	GAIN_PARAM Gain;
+	uint8_t GainsArray[sizeof(GAIN_PARAM)];
 };
 
 
-struct PID
+struct PID_PARAM
 {
 	float MaxOutput;
 	float SampleTime;
@@ -92,11 +92,11 @@ struct PID
 	
 union PIDS_CONFIG
 {
-	PID Pid;
-	float PidsArray[sizeof(PID)];
+	PID_PARAM Pid;
+	float PidsArray[sizeof(PID_PARAM)];
 };
 
-struct CONFIG
+struct SYS_PARAM
 {
 		uint8_t Motor_Inv_X;
 		uint8_t Motor_Inv_Y;
@@ -111,8 +111,8 @@ struct CONFIG
 
 union SYSTEM_CONFIGS
 {
-	CONFIG Byte;
-	uint8_t ToByteArray[sizeof(CONFIG)];
+	SYS_PARAM Byte;
+	uint8_t ToByteArray[sizeof(SYS_PARAM)];
 };
 
 

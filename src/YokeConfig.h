@@ -11,6 +11,8 @@
 #define TOTALGAIN_X         50
 #define TOTALGAIN_Y         50
 
+#define AXIS_EDGE_PROTECT   50
+
 #define X_AXIS              0
 #define Y_AXIS              1
 #ifdef _VARIANT_ARDUINO_DUE_X_
