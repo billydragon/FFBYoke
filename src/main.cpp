@@ -6,9 +6,9 @@
 #include "PID_V2.h"
 
 
-//#ifdef _VARIANT_ARDUINO_DUE_X_
+#ifdef _VARIANT_ARDUINO_DUE_X_
 #define Serial  SerialUSB
-//#endif
+#endif
 
 #define USING_DAC
 #define DUE_QDEC

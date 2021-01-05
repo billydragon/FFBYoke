@@ -57,7 +57,7 @@ union COMMANDS
 };
 
 
-struct GAINS
+struct GAIN
 {
 	uint8_t totalGain;         
 	uint8_t constantGain;    
@@ -76,12 +76,12 @@ struct GAINS
 
 union GAINS_CONFIG
 {
-	GAINS gain;
-	uint8_t GainsArray[sizeof(GAINS)];
+	GAIN Gain;
+	uint8_t GainsArray[sizeof(GAIN)];
 };
 
 
-struct PIDS
+struct PID
 {
 	float MaxOutput;
 	float SampleTime;
@@ -92,8 +92,8 @@ struct PIDS
 	
 union PIDS_CONFIG
 {
-	PIDS pid;
-	float PidsArray[sizeof(PIDS)];
+	PID Pid;
+	float PidsArray[sizeof(PID)];
 };
 
 struct CONFIG

@@ -56,7 +56,7 @@ void ConfigManager::send_Gains(byte dt)
 {
   for (int i = 0; i < 2; i++)
         {
-          for (uint8_t j = 0; j < sizeof(GAINS); j++)
+          for (uint8_t j = 0; j < sizeof(GAIN); j++)
           {
             cmd.Header.Command = (uint8_t)cmd_type.Read_Memory;
             cmd.Header.Data_Type = dt;
@@ -76,7 +76,7 @@ void ConfigManager::send_Pids(byte dt)
 {
   for (int i = 0; i < 2; i++)
         {
-          for (uint8_t j = 0; j < (sizeof(PIDS)/4); j++)
+          for (uint8_t j = 0; j < (sizeof(PID)/4); j++)
           {
             cmd.Header.Command = (uint8_t)cmd_type.Read_Memory;
             cmd.Header.Data_Type = dt;
