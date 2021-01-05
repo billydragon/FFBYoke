@@ -9,6 +9,8 @@
 #include "DAC8563.h"
 #include "DigitalWriteFast.h"
 
+ConfigManager * _cfg_manager;
+
 DAC8563::DAC8563()
 {
   _cs_pin = CS_PIN;
@@ -28,8 +30,10 @@ DAC8563::DAC8563( uint8_t cs_pin, float vref)
   _vref=vref;
 };
 */
-void DAC8563::begin(ConfigManager cfg_mangager )
+void DAC8563::begin(ConfigManager *cfg_mangager )
 {
+
+  _cfg_manager = cfg_mangager;
   pinMode(SERVO_ON_X,OUTPUT);
 	pinMode(SERVO_ON_Y,OUTPUT);
 
@@ -46,9 +50,7 @@ void DAC8563::begin(ConfigManager cfg_mangager )
   SPI.setBitOrder(MSBFIRST);
   #endif
   initialize();
-  _Motor_Inv_X = cfg_mangager._SysConfig.Byte.Motor_Inv_X;
-  _Motor_Inv_Y = cfg_mangager._SysConfig.Byte.Motor_Inv_Y;
-  _Motor_Dir_Delay = cfg_mangager._SysConfig.Byte.Motor_Dir_Delay;
+  
   //Debug
  // SerialUSB.println("Init SPI Done.");
   //delay(1000);
@@ -58,6 +60,9 @@ void DAC8563::setPWM(int idx, int32_t force)
  {
         uint16_t DACValue = 0;
         uint16_t zeroPWM = map(0,-255,255,DAC_MAX,DAC_MIN);
+        _Motor_Inv_X = _cfg_manager->_SysConfig.Byte.Motor_Inv_X;
+        _Motor_Inv_Y = _cfg_manager->_SysConfig.Byte.Motor_Inv_Y;
+        _Motor_Dir_Delay = _cfg_manager->_SysConfig.Byte.Motor_Dir_Delay;
          switch (idx)
          {
          case X_AXIS:
@@ -66,8 +71,11 @@ void DAC8563::setPWM(int idx, int32_t force)
                 else{
                     DACValue = map(force,-255,255,DAC_MIN,DAC_MAX); 
                     }
+                    if(_Motor_Dir_Delay > 0)
+                    {
                     outPutValue(CMD_SETA_UPDATEA, zeroPWM);
                     delay(_Motor_Dir_Delay);
+                    }
                     outPutValue(CMD_SETA_UPDATEA, DACValue);
                  break;
          case Y_AXIS:
@@ -76,8 +84,12 @@ void DAC8563::setPWM(int idx, int32_t force)
                     else{            
                     DACValue = map(force,-255,255,DAC_MIN,DAC_MAX);
                     }
-                    outPutValue(CMD_SETB_UPDATEB, zeroPWM);
-                    delay(_Motor_Dir_Delay);
+                    if(_Motor_Dir_Delay > 0)
+                    {
+                      outPutValue(CMD_SETB_UPDATEB, zeroPWM);
+                      delay(_Motor_Dir_Delay);
+                    }
+                   
                     outPutValue(CMD_SETB_UPDATEB, DACValue);
                 break;
          default:

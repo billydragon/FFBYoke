@@ -7,7 +7,7 @@
 
 
 
-#define DEBUG
+//#define DEBUG
 
 #ifdef _VARIANT_ARDUINO_DUE_X_
 #define Serial  SerialUSB
@@ -122,7 +122,7 @@ void setup() {
 
   delay(200);
   #ifdef USING_DAC
-  pwm.begin(CfgManager);
+  pwm.begin(&CfgManager);
   #else
   //DuePWM::pinFreq1( uint32_t pin ) // pin must be 6 through 9
   DuePWM::pinFreq2(PWM_PIN_X); // pin must be 6 through 9
