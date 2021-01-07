@@ -43,7 +43,7 @@ Notes:
 #include "Arduino.h"
 #include "DigitalWriteFast.h"
 
-
+ConfigManager * _cfg_Manager;
 DuePWM::DuePWM()
 {
 	//pwm_res_nbit = 8;
@@ -62,6 +62,11 @@ DuePWM::DuePWM(uint32_t clockA_freq, uint32_t clockB_freq)
 	setFreq2(clockB_freq);
 	set_output();
 
+}
+
+void DuePWM::begin(ConfigManager *cfg_mangager )
+{
+  _cfg_Manager = cfg_mangager;
 }
 
 void DuePWM::set_output()
@@ -104,33 +109,56 @@ void DuePWM::servo_off(int idx)
 void DuePWM::setPWM(int idx, int16_t force) {
 	int nomalizedForce=0;	
 	int dir=0, pin=0;
+	 uint16_t zeroPWM = map(0,-255,255,-DUE_PWM_SCALE,DUE_PWM_SCALE);
+        _Motor_Inv_X = _cfg_Manager->_SysConfig.Byte.Motor_Inv_X;
+        _Motor_Inv_Y = _cfg_Manager->_SysConfig.Byte.Motor_Inv_Y;
+        _Motor_Dir_Delay = _cfg_Manager->_SysConfig.Byte.Motor_Dir_Delay;
+	
+	  switch (idx)
+         {
+         case X_AXIS:
+		 			dir = Dir_X;
+					pin = PWM_PIN_X;
+                if(_Motor_Inv_X == 1)
+                    nomalizedForce = map(force,-255,255,DUE_PWM_SCALE,-DUE_PWM_SCALE);
+                else{
+                    nomalizedForce = map(force,-255,255,-DUE_PWM_SCALE,DUE_PWM_SCALE); 
+                    }
+                 break;
+         case Y_AXIS:
+		 			dir = Dir_Y;
+					pin = PWM_PIN_Y;
+                 if(_Motor_Inv_Y == 1)
+                    nomalizedForce = map(force,-255,255,DUE_PWM_SCALE,-DUE_PWM_SCALE);
+                else{
+                    nomalizedForce = map(force,-255,255,-DUE_PWM_SCALE,DUE_PWM_SCALE); 
+                    }
+                break;
+         default:
+                 break;
+         }
 
-	nomalizedForce = map (force, -255,255,0,DUE_PWM_SCALE); 
-	if(idx == 0)
-	{
-		dir = Dir_X;
-		pin = PWM_PIN_X;
-	}
-	else if (idx == 1)
-	{
-		dir = Dir_Y;
-		pin = PWM_PIN_Y;
-		/* code */
-	}
-		if (force >= 0) 
+		 if (force >= 0) 
 		{
-			
 			digitalWriteFast(dir,HIGH);
-			pinDuty( pin, nomalizedForce); 
-			
+			if(_Motor_Dir_Delay > 0)
+			{
+			pinDuty(pin,zeroPWM);
+			delay(_Motor_Dir_Delay);
+			}
+            pinDuty(pin,nomalizedForce);
 		}
 		else
 		{
 			digitalWriteFast(dir,LOW);
-			pinDuty(pin, nomalizedForce); 
+			 if(_Motor_Dir_Delay > 0)
+			{
+			pinDuty(pin,zeroPWM);
+			delay(_Motor_Dir_Delay);
+			}
+            pinDuty(pin,abs(nomalizedForce));
 		}
-		
-	
+        
  }
 
 void DuePWM::setFreq1(uint32_t  clockA_freq)

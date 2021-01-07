@@ -44,6 +44,7 @@ Notes:
 
 #include <Arduino.h>
 #include "YokeConfig.h"
+#include "ConfigManager.h"
 
 class DuePWM
 {
@@ -67,7 +68,7 @@ class DuePWM
 	// FORCE PWM STOP
 	//--------------------------------
 	void  stop( uint32_t  pin );
-
+	void begin(ConfigManager *cfg_mangager);
 	void setPWM(int idx, int16_t forces);
     void servo_on(int idx);
     void servo_off(int idx);
@@ -83,6 +84,10 @@ class DuePWM
 	//		return value << (to-from);
 	//}
 
+	uint8_t _Motor_Inv_X = 0;
+    uint8_t _Motor_Inv_Y = 0;
+    uint8_t _Motor_Dir_Delay = 0;
+	
 	//int       pwm_res_nbit;
 	uint32_t  pwm_clockA_freq;
 	uint32_t  pwm_clockB_freq;

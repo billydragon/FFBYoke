@@ -7,7 +7,7 @@
 
 
 
-//#define DEBUG
+#define DEBUG
 
 #ifdef _VARIANT_ARDUINO_DUE_X_
 #define Serial  SerialUSB
@@ -121,12 +121,11 @@ void setup() {
   */ 
 
   delay(200);
-  #ifdef USING_DAC
   pwm.begin(&CfgManager);
-  #else
+  #ifndef USING_DAC
   //DuePWM::pinFreq1( uint32_t pin ) // pin must be 6 through 9
-  DuePWM::pinFreq2(PWM_PIN_X); // pin must be 6 through 9
-  DuePWM::pinFreq2(PWM_PIN_Y); // pin must be 6 through 9
+  pwm.pinFreq2(PWM_PIN_X); // pin must be 6 through 9
+  pwm.pinFreq2(PWM_PIN_Y); // pin must be 6 through 9
   #endif
   delay(200);
   pwm.servo_off(X_AXIS);
@@ -323,12 +322,12 @@ void findCenter(int axis)
 {
   char buff[48];
   int32_t LastPos=0, Axis_Center=0 ,Axis_Range=0;
-  
+  pwm.servo_on(axis);
+   delay(2000);
   encoder.axis[axis].minValue =0;
   encoder.axis[axis].maxValue =0;
   SetZero_Encoder(axis);
-  pwm.servo_on(axis);
-   delay(2000);
+  
   //Serial.println("Find Center");
   while (Buttons.CurrentState)
   {
