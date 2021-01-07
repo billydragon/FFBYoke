@@ -36,33 +36,20 @@ void DAC8563::begin(ConfigManager *cfg_mangager )
   _cfg_manager = cfg_mangager;
   pinMode(SERVO_ON_X,OUTPUT);
 	pinMode(SERVO_ON_Y,OUTPUT);
-
-  #ifdef _VARIANT_ARDUINO_DUE_X_
   SPI.begin(_cs_pin);
   SPI.setDataMode(_cs_pin,SPI_MODE1);
   SPI.setBitOrder(_cs_pin,MSBFIRST);
-  #else
-  /* !Chip select (low to enable) */
-  pinMode(_cs_pin, OUTPUT);
-  digitalWriteFast(_cs_pin, HIGH);
-  SPI.begin();
-  SPI.setDataMode(SPI_MODE1);
-  SPI.setBitOrder(MSBFIRST);
-  #endif
   initialize();
   
-  //Debug
- // SerialUSB.println("Init SPI Done.");
-  //delay(1000);
 };
 
 void DAC8563::setPWM(int idx, int32_t force)
  {
         uint16_t DACValue = 0;
-        uint16_t zeroPWM = map(0,-255,255,DAC_MAX,DAC_MIN);
+        //uint16_t zeroPWM = map(0,-255,255,DAC_MAX,DAC_MIN);
         _Motor_Inv_X = _cfg_manager->_SysConfig.Byte.Motor_Inv_X;
         _Motor_Inv_Y = _cfg_manager->_SysConfig.Byte.Motor_Inv_Y;
-        _Motor_Dir_Delay = _cfg_manager->_SysConfig.Byte.Motor_Dir_Delay;
+       // _Motor_Dir_Delay = _cfg_manager->_SysConfig.Byte.Motor_Dir_Delay;
          switch (idx)
          {
          case X_AXIS:
@@ -71,11 +58,11 @@ void DAC8563::setPWM(int idx, int32_t force)
                 else{
                     DACValue = map(force,-255,255,DAC_MIN,DAC_MAX); 
                     }
-                    if(_Motor_Dir_Delay > 0)
-                    {
-                    outPutValue(CMD_SETA_UPDATEA, zeroPWM);
-                    delay(_Motor_Dir_Delay);
-                    }
+                  //  if(_Motor_Dir_Delay > 0)
+                  //  {
+                  //  outPutValue(CMD_SETA_UPDATEA, zeroPWM);
+                  //  delay(_Motor_Dir_Delay);
+                  //  }
                     outPutValue(CMD_SETA_UPDATEA, DACValue);
                  break;
          case Y_AXIS:
@@ -84,11 +71,11 @@ void DAC8563::setPWM(int idx, int32_t force)
                     else{            
                     DACValue = map(force,-255,255,DAC_MIN,DAC_MAX);
                     }
-                    if(_Motor_Dir_Delay > 0)
-                    {
-                      outPutValue(CMD_SETB_UPDATEB, zeroPWM);
-                      delay(_Motor_Dir_Delay);
-                    }
+                   // if(_Motor_Dir_Delay > 0)
+                   // {
+                   //   outPutValue(CMD_SETB_UPDATEB, zeroPWM);
+                   //   delay(_Motor_Dir_Delay);
+                   // }
                    
                     outPutValue(CMD_SETB_UPDATEB, DACValue);
                 break;
@@ -103,11 +90,11 @@ void DAC8563::setPWM(int idx, int32_t force)
 {
 	if(idx == X_AXIS)
 	{ 
-		digitalWriteFast(SERVO_ON_X,LOW);
+		digitalWriteFast(SERVO_ON_X,HIGH);
 	}
 	
 	else
-	digitalWriteFast(SERVO_ON_Y,LOW);
+	digitalWriteFast(SERVO_ON_Y,HIGH);
 }
 
 
@@ -115,24 +102,17 @@ void DAC8563::servo_off(int idx)
 {
 	if(idx == X_AXIS)
 	{ 
-		digitalWriteFast(SERVO_ON_X,HIGH);
+		digitalWriteFast(SERVO_ON_X,LOW);
 	}
 	else
-	  digitalWriteFast(SERVO_ON_Y,HIGH);
+	  digitalWriteFast(SERVO_ON_Y,LOW);
 }
 
 
 void DAC8563::DAC_WR_REG(uint8_t cmd_byte, uint16_t data_byte) {
   
-  #ifdef _VARIANT_ARDUINO_DUE_X_
   SPI.transfer(_cs_pin,cmd_byte,SPI_CONTINUE);
   SPI.transfer16(_cs_pin,data_byte);
-  #else
-  digitalWriteFast(_cs_pin, LOW);
-  SPI.transfer(cmd_byte);
-  SPI.transfer16(data_byte);
-  digitalWriteFast(_cs_pin, HIGH);
-  #endif
  
 };
 
@@ -140,7 +120,6 @@ void DAC8563::DAC_WR_REG(uint8_t cmd_byte, uint16_t data_byte) {
 void DAC8563::outPutValue(uint8_t cmd_byte,uint16_t input) {
   byte inputMid = (input>>8)&0xFF;
   byte inputLast = input&0xFF;
-  //unsigned int  t= (input>>8)&0xFF;
   writeValue(cmd_byte, (inputLast),(inputMid));
 };
 
@@ -159,18 +138,11 @@ void DAC8563::writeB(float input) {
 
 void DAC8563::writeValue(uint8_t cmd_byte, uint8_t mid, uint8_t last) {
  
-  #ifdef _VARIANT_ARDUINO_DUE_X_
+ 
   SPI.transfer(_cs_pin,cmd_byte,SPI_CONTINUE);
   SPI.transfer(_cs_pin,last,SPI_CONTINUE);
   SPI.transfer(_cs_pin,mid);
-  #else
-  digitalWriteFast(_cs_pin, LOW);
-  SPI.transfer(cmd_byte);
-  SPI.transfer(last);
-  SPI.transfer(mid);
-  digitalWriteFast(_cs_pin, HIGH);
-  #endif
-  
+
 };
 
 void DAC8563::initialize() {

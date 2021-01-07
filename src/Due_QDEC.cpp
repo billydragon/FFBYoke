@@ -1,8 +1,5 @@
 #include "Due_QDEC.h"
 
-
-#ifdef _VARIANT_ARDUINO_DUE_X_
-
 Due_QDEC::Due_QDEC() {
   
   // activate peripheral functions for quad pins Encoder-X
@@ -135,4 +132,3 @@ void Due_QDEC::Reset_Encoder(int idx)
 Due_QDEC::~Due_QDEC() {
 
 }
-#endif

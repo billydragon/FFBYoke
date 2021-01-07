@@ -9,29 +9,13 @@
 
 #define DEBUG
 
-#ifdef _VARIANT_ARDUINO_DUE_X_
 #define Serial  SerialUSB
-#endif
 
-#define USING_DAC
-#define DUE_QDEC
-
-
-#ifdef USING_DAC
 #include "DAC8563.h"
 DAC8563 pwm=DAC8563(CS_PIN);
-#else
-#include "DuePWM.h"
-DuePWM pwm(PWM_FREQ1,PWM_FREQ2);
-#endif
 
-#ifdef DUE_QDEC
 #include "Due_QDEC.h"
 Due_QDEC encoder;
-#else
-#include "QEncoder.h"
-QEncoder encoder; 
-#endif
 
 
 int32_t xy_force[2] = {0,0};
@@ -93,10 +77,10 @@ void Set_PID_Turnings()
 
 void setup() {
  
+  delay(1500);
   Serial.begin(BAUD_RATE);
   Joystick.begin(true);
   CfgManager.begin();  
-   delay(1000);
    for(int ax =0; ax <2 ; ax++)
   {
   myPID[ax].SetSampleTime(CfgManager._Pids[ax].Pid.SampleTime);
@@ -113,23 +97,9 @@ void setup() {
   pinMode(Buttons.pinNumber,INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(Buttons.pinNumber), Push_Button_01_ISR, CHANGE);
 
-  /*
-  attachInterrupt(digitalPinToInterrupt(encoderPin_XA), calculateEncoderPostion_X, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(encoderPin_XB), calculateEncoderPostion_X, CHANGE);  
-  attachInterrupt(digitalPinToInterrupt(encoderPin_YA), calculateEncoderPostion_Y, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(encoderPin_YB), calculateEncoderPostion_Y, CHANGE); 
-  */ 
-
-  delay(200);
   pwm.begin(&CfgManager);
-  #ifndef USING_DAC
-  //DuePWM::pinFreq1( uint32_t pin ) // pin must be 6 through 9
-  pwm.pinFreq2(PWM_PIN_X); // pin must be 6 through 9
-  pwm.pinFreq2(PWM_PIN_Y); // pin must be 6 through 9
-  #endif
-  delay(200);
-  pwm.servo_off(X_AXIS);
-  pwm.servo_off(Y_AXIS);
+  pwm.servo_on(X_AXIS);
+  pwm.servo_on(Y_AXIS);
   pwm.setPWM(X_AXIS,0);  
   pwm.setPWM(Y_AXIS,0);
   
@@ -143,7 +113,7 @@ void setup() {
 
 void loop() {
 
-   CfgManager.GetUpdate();
+  CfgManager.GetUpdate();
   Set_PID_Turnings(); 
   
     if (initialRun == 1 ) 
@@ -174,11 +144,9 @@ void loop() {
         
     }
 
-   
     Set_Gains();
     SetEffects();
     Joystick.getForce(xy_force);
-    
     
     if(CfgManager._SysConfig.Byte.Swap_XY_Force == 1)   //Swap axis forces
     {
@@ -188,7 +156,6 @@ void loop() {
 
     }
     
-
     xy_force[X_AXIS] = constrain(xy_force[X_AXIS], -255, 255);
     xy_force[Y_AXIS] = constrain(xy_force[Y_AXIS], -255, 255);
     
@@ -248,8 +215,8 @@ Joystick.setEffectParams(effects);
 void Set_Gains()
 {
 
-for(int i = 0; i < 2 ; i++)
-{
+      for(int i = 0; i < 2 ; i++)
+      {
           //set x axis gains
           gain[i].totalGain        = CfgManager._Gains[i].Gain.totalGain;
           gain[i].constantGain     = CfgManager._Gains[i].Gain.constantGain;
@@ -264,21 +231,11 @@ for(int i = 0; i < 2 ; i++)
           gain[i].inertiaGain      = CfgManager._Gains[i].Gain.inertiaGain;
           gain[i].frictionGain     = CfgManager._Gains[i].Gain.frictionGain;
           gain[i].customGain       = CfgManager._Gains[i].Gain.customGain;
-}
+      }
 
           Joystick.setGains(gain);
 
 }
-
-/*
-void calculateEncoderPostion_X() {
-  encoder.tick_X();
-}
-
-void calculateEncoderPostion_Y() {
-  encoder.tick_Y();
-}
-*/
 
 void Push_Button_01_ISR()
 {
@@ -322,13 +279,11 @@ void findCenter(int axis)
 {
   char buff[48];
   int32_t LastPos=0, Axis_Center=0 ,Axis_Range=0;
-  pwm.servo_on(axis);
-   delay(2000);
+  
   encoder.axis[axis].minValue =0;
   encoder.axis[axis].maxValue =0;
   SetZero_Encoder(axis);
   
-  //Serial.println("Find Center");
   while (Buttons.CurrentState)
   {
     encoder.updatePosition(axis);
@@ -371,7 +326,7 @@ void findCenter(int axis)
 
 void gotoPosition(int idx, int32_t targetPosition) {
   int32_t LastPos=0;
-  char buff[64];
+  
   Setpoint[idx] = targetPosition;
   while (encoder.axis[idx].currentPosition != targetPosition) {
     Setpoint[idx] = targetPosition;
@@ -384,7 +339,7 @@ void gotoPosition(int idx, int32_t targetPosition) {
     #ifdef DEBUG
     if (LastPos !=encoder.axis[idx].currentPosition )
     {
-   
+    char buff[64];
     sprintf(buff,"[%d] P: %ld,T: %ld,F: %d",idx,encoder.axis[idx].currentPosition, (int32_t)Setpoint[idx], (int)Output[idx] );
     Serial.println(buff);
     
