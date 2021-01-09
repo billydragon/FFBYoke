@@ -105,11 +105,7 @@ void setup() {
   pwm.setPWM(Y_AXIS,0);
   
   initialRun = CfgManager._SysConfig.Byte.Auto_Calibration;
-  if(!Buttons.CurrentState)
-   {
-     initialRun = 1;
-   }
-
+  
 }
 
 void loop() {
@@ -276,41 +272,41 @@ void SetZero_Encoder(int idx)
 
 }
 
-void findCenter(int axis)
+void findCenter(int axis_num)
 {
   char buff[48];
   int32_t LastPos=0, Axis_Center=0 ,Axis_Range=0;
   
-  encoder.axis[axis].minValue =0;
-  encoder.axis[axis].maxValue =0;
-  SetZero_Encoder(axis);
+  encoder.axis[axis_num].minValue =0;
+  encoder.axis[axis_num].maxValue =0;
+  SetZero_Encoder(axis_num);
   
   while (Buttons.CurrentState)
   {
-    encoder.updatePosition(axis);
-    if(LastPos != encoder.axis[axis].currentPosition)
+    encoder.updatePosition(axis_num);
+    if(LastPos != encoder.axis[axis_num].currentPosition)
     {
-    AutoCalibration(axis);
-    LastPos = encoder.axis[axis].currentPosition;
+    AutoCalibration(axis_num);
+    LastPos = encoder.axis[axis_num].currentPosition;
     #ifdef DEBUG
-    sprintf(buff,"[%d]: %ld,%ld", axis, encoder.axis[axis].minValue, encoder.axis[axis].maxValue);
+    sprintf(buff,"[%d]: %ld,%ld", axis_num, encoder.axis[axis_num].minValue, encoder.axis[axis_num].maxValue);
     Serial.println(buff);
     #endif
     }
 
   }
  
-    Axis_Center= (encoder.axis[axis].minValue + encoder.axis[axis].maxValue)/2;
-    Axis_Range =  abs(encoder.axis[axis].minValue) + abs(encoder.axis[axis].maxValue);
-    gotoPosition(axis, Axis_Center);    //goto center X
-    SetZero_Encoder(axis);
+    Axis_Center= (encoder.axis[axis_num].minValue + encoder.axis[axis_num].maxValue)/2;
+    Axis_Range =  abs(encoder.axis[axis_num].minValue) + abs(encoder.axis[axis_num].maxValue);
+    gotoPosition(axis_num, Axis_Center);    //goto center X
+    SetZero_Encoder(axis_num);
     #ifdef DEBUG
-    sprintf(buff,"[%d]: %ld - 0 - %ld", axis, encoder.axis[axis].minValue, encoder.axis[axis].maxValue);
+    sprintf(buff,"[%d]: %ld - 0 - %ld", axis_num, encoder.axis[axis_num].minValue, encoder.axis[axis_num].maxValue);
     Serial.println(buff);
     #endif
-    encoder.axis[axis].maxValue = (Axis_Range - AXIS_EDGE_PROTECT)/2;
-    encoder.axis[axis].minValue = -encoder.axis[axis].maxValue;
-    if(axis == X_AXIS)
+    encoder.axis[axis_num].maxValue = (Axis_Range - AXIS_EDGE_PROTECT)/2;
+    encoder.axis[axis_num].minValue = -encoder.axis[axis_num].maxValue;
+    if(axis_num == X_AXIS)
     {
       Joystick.setXAxisRange(encoder.axis[X_AXIS].minValue, encoder.axis[X_AXIS].maxValue);
       Joystick.setXAxis(encoder.axis[X_AXIS].currentPosition);
@@ -321,30 +317,30 @@ void findCenter(int axis)
       Joystick.setYAxis(encoder.axis[Y_AXIS].currentPosition);
     }
     
-    pwm.setPWM(axis, 0);
+    pwm.setPWM(axis_num, 0);
 }
 
 
-void gotoPosition(int idx, int32_t targetPosition) {
+void gotoPosition(int axis_num, int32_t targetPosition) {
   int32_t LastPos=0;
   
-  Setpoint[idx] = targetPosition;
-  while (encoder.axis[idx].currentPosition != targetPosition) {
-    Setpoint[idx] = targetPosition;
-    encoder.updatePosition(idx);
-    Input[idx] = encoder.axis[idx].currentPosition ;
-    myPID[idx].Compute();
-    pwm.setPWM(idx, -Output[idx]);
-    CalculateMaxSpeedAndMaxAcceleration(idx);
+  Setpoint[axis_num] = targetPosition;
+  while (encoder.axis[axis_num].currentPosition != targetPosition) {
+    Setpoint[axis_num] = targetPosition;
+    encoder.updatePosition(axis_num);
+    Input[axis_num] = encoder.axis[axis_num].currentPosition ;
+    myPID[axis_num].Compute();
+    pwm.setPWM(axis_num, -Output[axis_num]);
+    CalculateMaxSpeedAndMaxAcceleration(axis_num);
     
     #ifdef DEBUG
-    if (LastPos !=encoder.axis[idx].currentPosition )
+    if (LastPos !=encoder.axis[axis_num].currentPosition )
     {
     char buff[64];
-    sprintf(buff,"[%d] P: %ld,T: %ld,F: %d",idx,encoder.axis[idx].currentPosition, (int32_t)Setpoint[idx], (int)Output[idx] );
+    sprintf(buff,"[%d] P: %ld,T: %ld,F: %d",axis_num,encoder.axis[axis_num].currentPosition, (int32_t)Setpoint[axis_num], (int)Output[axis_num]);
     Serial.println(buff);
     
-    LastPos = encoder.axis[idx].currentPosition;
+    LastPos = encoder.axis[axis_num].currentPosition;
     }
     #endif
     
@@ -352,14 +348,14 @@ void gotoPosition(int idx, int32_t targetPosition) {
   
 }
 
-void CalculateMaxSpeedAndMaxAcceleration(int idx) {
-  if (encoder.axis[idx].maxVelocity < abs(encoder.axis[idx].currentVelocity)) {
-    encoder.axis[idx].maxVelocity = abs(encoder.axis[idx].currentVelocity);
+void CalculateMaxSpeedAndMaxAcceleration(int axis_num) {
+  if (encoder.axis[axis_num].maxVelocity < abs(encoder.axis[axis_num].currentVelocity)) {
+    encoder.axis[axis_num].maxVelocity = abs(encoder.axis[axis_num].currentVelocity);
   }
-  if (encoder.axis[idx].maxAcceleration < abs(encoder.axis[idx].currentAcceleration)) {
-    encoder.axis[idx].maxAcceleration = abs(encoder.axis[idx].currentAcceleration);
+  if (encoder.axis[axis_num].maxAcceleration < abs(encoder.axis[axis_num].currentAcceleration)) {
+    encoder.axis[axis_num].maxAcceleration = abs(encoder.axis[axis_num].currentAcceleration);
   }
-  if (encoder.axis[idx].maxPositionChange < abs(encoder.axis[idx].positionChange)) {
-    encoder.axis[idx].maxPositionChange = abs(encoder.axis[idx].positionChange);
+  if (encoder.axis[axis_num].maxPositionChange < abs(encoder.axis[axis_num].positionChange)) {
+    encoder.axis[axis_num].maxPositionChange = abs(encoder.axis[axis_num].positionChange);
   }
 }

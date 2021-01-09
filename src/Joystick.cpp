@@ -734,7 +734,7 @@ int32_t Joystick_::ConditionForceCalculator(volatile TEffectState& effect, float
 		tempForce = (metric - (float)1.00 * (cpOffset + deadBand) / 10000) * positiveCoefficient;
 		tempForce = (tempForce > positiveSaturation ? positiveSaturation : tempForce);
 	}
-	else return 0;
+	//else return 0;
 	tempForce = -tempForce * effect.gain / 255;
 	switch (effect.effectType) {
 	case  USB_EFFECT_DAMPER:
