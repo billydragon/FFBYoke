@@ -2,8 +2,8 @@
 #define YOKECONFIG_h
 #include <Arduino.h>
 
-#define CS_PIN            52    // SS pin for SPI
-
+#define CS_PIN              52    // SS pin for SPI
+#define LDAC_PIN            50                
 #define BAUD_RATE 115200
 #define XY_FORCE_INVERT    
 #define MAX_X_VALUE         3000

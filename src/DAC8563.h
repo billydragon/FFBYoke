@@ -33,24 +33,37 @@
 #define DAC_MIN           512 
 #define DAC_MAX           65024
 
+#define CMD_SET_A                   0x00  // Write to DAC-A input register
+#define CMD_SET_B                   0x01  // Write to DAC-B input register
+#define CMD_SET_AB                  0x07  // Write to DAC-A and DAC-B input registers
+#define CMD_SET_A_UPDATE_AB         0x10  // Write to DAC-A input register and update all DACs
+#define CMD_SET_B_UPDATE_AB         0x11  // Write to DAC-B input register and update all DACs
+#define CMD_SET_AB_UPDATE_AB        0x17  // Write to DAC-A and DAC-B input register and update all DACs
+#define CMD_SET_A_UPDATE_A          0x18  // Write to DAC-A input register and update DAC-A
+#define CMD_SET_B_UPDATE_B          0x19  // Write to DAC-B input register and update DAC-B
+#define CMD_SET_ALL_UPDATE_ALL      0x1F  // Write to DAC-A and DAC-B input register and update all DACs
+#define CMD_UPDATE_A                0x08  // Update DAC-A
+#define CMD_UPDATE_B                0x09  // Update DAC-B
+#define CMD_UPDATE_ALL_DACS         0x0F  // Update all DACs
 
-#define CMD_SETA_UPDATEA          0x18  // 
-#define CMD_SETB_UPDATEB          0x19  // 
-#define CMD_UPDATE_ALL_DACS       0x0F  // 
-#define CMD_GAIN                  0x02  //
-#define DATA_GAIN_B2_A2           0x0000  // 
-#define DATA_GAIN_B2_A1           0x0001  // 
-#define DATA_GAIN_B1_A2           0x0002  // 
-#define DATA_GAIN_B1_A1           0x0003  //           
+#define CMD_GAIN                    0x02  //
+#define DATA_GAIN_B2_A2             0x0000  // Gain: DAC-B gain = 2, DAC-A gain = 2 (default with internal VREF)
+#define DATA_GAIN_B2_A1             0x0001  // Gain: DAC-B gain = 2, DAC-A gain = 1
+#define DATA_GAIN_B1_A2             0x0002  // Gain: DAC-B gain = 1, DAC-A gain = 2
+#define DATA_GAIN_B1_A1             0x0003  // Gain: DAC-B gain = 1, DAC-A gain = 1 (power-on default)          
 
-#define CMD_PWR_UP_A_B            0x20  // 
-#define DATA_PWR_UP_A_B           0x0003  // Power up DAC-A and DAC-B  data
+#define CMD_PWR_UP_A_B              0x20  // 
+#define DATA_PWR_UP_A_B             0x0003  // Power up DAC-A and DAC-B
 
-#define CMD_RESET_ALL_REG         0x28  // 
-#define DATA_RESET_ALL_REG        0x0001  // 
+#define CMD_RESET_REG               0x28  // 
+#define DATA_RESET_AB_REG           0x0000  // Reset DAC-A and DAC-B input register and update all DACs
+#define DATA_RESET_ALL_REG          0x0001  // Reset all registers and update all DACs (Power-on-reset update)
 
-#define CMD_LDAC_DIS              0x30  // 
-#define DATA_LDAC_DIS             0x0003  // 
+#define CMD_LDAC_DIS                0x30  //
+#define DATA_LDAC_ENB_AB            0x0000  // LDAC pin active for DAC-B and DAC-A
+#define DATA_LDAC_ENB_B_DIS_A       0x0001  // LDAC pin active for DAC-B; inactive for DAC-A 
+#define DATA_LDAC_ENB_A_DIS_B       0x0002  // LDAC pin inactive for DAC-B; active for DAC-A
+#define DATA_LDAC_DIS_AB            0x0003  // LDAC pin inactive for DAC-B and DAC-A
 
 #define CMD_INTERNAL_REF_DIS      0x38  // Disable internal reference and reset DACs to gain = 1
 #define DATA_INTERNAL_REF_DIS     0x0000  // Disable internal reference and reset DACs to gain = 1
@@ -79,6 +92,7 @@ class DAC8563
     void writeVoltage(float input);
     void writeA(float input);
     void writeB(float input);
+    void write(uint8_t cmd_byte, uint16_t data);
 
     void initialize();
     void DAC_WR_REG(uint8_t cmd_byte, uint16_t data_byte );

@@ -36,9 +36,12 @@ void DAC8563::begin(ConfigManager *cfg_mangager )
   _cfg_manager = cfg_mangager;
   pinMode(SERVO_ON_X,OUTPUT);
 	pinMode(SERVO_ON_Y,OUTPUT);
+  //pinMode(LDAC_PIN,OUTPUT);
+
   SPI.begin(_cs_pin);
   SPI.setDataMode(_cs_pin,SPI_MODE1);
   SPI.setBitOrder(_cs_pin,MSBFIRST);
+  //SPI.setClockDivider(SPI_CLOCK_DIV8);
   initialize();
   
 };
@@ -46,7 +49,7 @@ void DAC8563::begin(ConfigManager *cfg_mangager )
 void DAC8563::setPWM(int idx, int32_t force)
  {
         uint16_t DACValue = 0;
-        //uint16_t zeroPWM = map(0,-255,255,DAC_MAX,DAC_MIN);
+        //uint16_t zeroPWM = map(0,-255,255,DAC_MIN,DAC_MAX);
         _Motor_Inv_X = _cfg_manager->_SysConfig.Byte.Motor_Inv_X;
         _Motor_Inv_Y = _cfg_manager->_SysConfig.Byte.Motor_Inv_Y;
        // _Motor_Dir_Delay = _cfg_manager->_SysConfig.Byte.Motor_Dir_Delay;
@@ -63,7 +66,8 @@ void DAC8563::setPWM(int idx, int32_t force)
                   //  outPutValue(CMD_SETA_UPDATEA, zeroPWM);
                   //  delay(_Motor_Dir_Delay);
                   //  }
-                    outPutValue(CMD_SETA_UPDATEA, DACValue);
+                    //outPutValue(CMD_SETB_UPDATEB, zeroPWM);
+                    outPutValue(CMD_SET_A_UPDATE_A, DACValue);
                  break;
          case Y_AXIS:
                  if(_Motor_Inv_Y == 1)
@@ -76,8 +80,8 @@ void DAC8563::setPWM(int idx, int32_t force)
                    //   outPutValue(CMD_SETB_UPDATEB, zeroPWM);
                    //   delay(_Motor_Dir_Delay);
                    // }
-                   
-                    outPutValue(CMD_SETB_UPDATEB, DACValue);
+                   // outPutValue(CMD_SETA_UPDATEA, zeroPWM);
+                    outPutValue(CMD_SET_B_UPDATE_B, DACValue);
                 break;
          default:
                  break;
@@ -90,11 +94,11 @@ void DAC8563::setPWM(int idx, int32_t force)
 {
 	if(idx == X_AXIS)
 	{ 
-		digitalWriteFast(SERVO_ON_X,HIGH);
+		digitalWriteFast(SERVO_ON_X,LOW);
 	}
 	
 	else
-	digitalWriteFast(SERVO_ON_Y,HIGH);
+	digitalWriteFast(SERVO_ON_Y,LOW);
 }
 
 
@@ -102,25 +106,26 @@ void DAC8563::servo_off(int idx)
 {
 	if(idx == X_AXIS)
 	{ 
-		digitalWriteFast(SERVO_ON_X,LOW);
+		digitalWriteFast(SERVO_ON_X,HIGH);
 	}
 	else
-	  digitalWriteFast(SERVO_ON_Y,LOW);
+	  digitalWriteFast(SERVO_ON_Y,HIGH);
 }
 
 
 void DAC8563::DAC_WR_REG(uint8_t cmd_byte, uint16_t data_byte) {
   
-  SPI.transfer(_cs_pin,cmd_byte,SPI_CONTINUE);
+  SPI.transfer(_cs_pin,cmd_byte);
   SPI.transfer16(_cs_pin,data_byte);
  
 };
 
 
 void DAC8563::outPutValue(uint8_t cmd_byte,uint16_t input) {
-  byte inputMid = (input>>8)&0xFF;
-  byte inputLast = input&0xFF;
-  writeValue(cmd_byte, (inputLast),(inputMid));
+  //byte inputMid = (input>>8)&0xFF;
+  //byte inputLast = input&0xFF;
+  //writeValue(cmd_byte, (inputLast),(inputMid));
+  write(cmd_byte, input);
 };
 
 void DAC8563::writeVoltage(float input) {
@@ -129,28 +134,41 @@ void DAC8563::writeVoltage(float input) {
 };
 
 void DAC8563::writeA(float input) {
- outPutValue(CMD_SETA_UPDATEA,Voltage_Convert(input/_vref*5));
+ outPutValue(CMD_SET_A_UPDATE_A,Voltage_Convert(input/_vref*5));
 };
 
 void DAC8563::writeB(float input) {
- outPutValue(CMD_SETB_UPDATEB,Voltage_Convert(input/_vref*5));
+ outPutValue(CMD_SET_B_UPDATE_B,Voltage_Convert(input/_vref*5));
 };
 
 void DAC8563::writeValue(uint8_t cmd_byte, uint8_t mid, uint8_t last) {
- 
- 
-  SPI.transfer(_cs_pin,cmd_byte,SPI_CONTINUE);
-  SPI.transfer(_cs_pin,last,SPI_CONTINUE);
+  //digitalWriteFast(LDAC_PIN,HIGH);
+  SPI.transfer(_cs_pin,cmd_byte);
+  SPI.transfer(_cs_pin,last);
   SPI.transfer(_cs_pin,mid);
+  //digitalWriteFast(LDAC_PIN,LOW);
 
 };
 
+void DAC8563::write(uint8_t cmd_byte, uint16_t data)
+{ 
+  //uint8_t datahigh; 
+  uint8_t datamid, datalow;
+
+  //datahigh = (uint8_t) ((data >> 16) & 0xFF); 
+  datamid  = (uint8_t) ((data >>  8) & 0xFF);
+  datalow  = (uint8_t) ((data >>  0) & 0xFF);
+    SPI.transfer(cmd_byte,SPI_CONTINUE);
+    SPI.transfer(datamid,SPI_CONTINUE);
+    SPI.transfer(datalow, SPI_LAST);
+}
+
 void DAC8563::initialize() {
-  DAC_WR_REG(CMD_RESET_ALL_REG, DATA_RESET_ALL_REG);      // reset
+  DAC_WR_REG(CMD_RESET_REG, DATA_RESET_ALL_REG);      // reset
   DAC_WR_REG(CMD_PWR_UP_A_B, DATA_PWR_UP_A_B);        // power up
   DAC_WR_REG(CMD_INTERNAL_REF_EN, DATA_INTERNAL_REF_EN);      // enable internal reference
   DAC_WR_REG(CMD_GAIN, DATA_GAIN_B2_A2);            // set multiplier
-  DAC_WR_REG(CMD_LDAC_DIS, DATA_LDAC_DIS);          // update the caches
+  DAC_WR_REG(CMD_LDAC_DIS, DATA_LDAC_DIS_AB);          // update the caches
 };
 
 uint16_t DAC8563::Voltage_Convert(float voltage)

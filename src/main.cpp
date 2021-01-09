@@ -71,6 +71,8 @@ void Set_PID_Turnings()
   Ki[ax] = CfgManager._Pids[ax].Pid.Ki;
   Kd[ax] = CfgManager._Pids[ax].Pid.Kd;
   myPID[ax].SetTunings(Kp[ax],Ki[ax],Kd[ax]);
+  myPID[ax].SetSampleTime(CfgManager._Pids[ax].Pid.SampleTime);
+  myPID[ax].SetOutputLimits(-CfgManager._Pids[ax].Pid.MaxOutput, CfgManager._Pids[ax].Pid.MaxOutput);
   }
  
 }
@@ -83,8 +85,7 @@ void setup() {
   CfgManager.begin();  
    for(int ax =0; ax <2 ; ax++)
   {
-  myPID[ax].SetSampleTime(CfgManager._Pids[ax].Pid.SampleTime);
-  myPID[ax].SetOutputLimits(-CfgManager._Pids[ax].Pid.MaxOutput, CfgManager._Pids[ax].Pid.MaxOutput);
+  
   myPID[ax].SetMode(AUTOMATIC);
   Input[ax] = encoder.axis[ax].currentPosition;
   }
@@ -108,7 +109,7 @@ void setup() {
    {
      initialRun = 1;
    }
- 
+
 }
 
 void loop() {
