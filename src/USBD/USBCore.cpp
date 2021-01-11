@@ -15,10 +15,10 @@
 */
 
 #include "Arduino.h"
-#include "USBAPI.h"
+#include "USBD/USBAPI.h"
 #include "Reset.h"
 #include <stdio.h>
-#include "PluggableUSB.h"
+#include "USBD/PluggableUSB.h"
 #include <stdint.h>
 
 //#define TRACE_CORE(x)    x

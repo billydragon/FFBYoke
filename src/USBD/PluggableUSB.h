@@ -20,7 +20,7 @@
 #ifndef PUSB_h
 #define PUSB_h
 
-#include "USBAPI.h"
+#include "USBD/USBAPI.h"
 
 #if defined(USBCON)
 

@@ -17,10 +17,10 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "USBAPI.h"
-#include "USBDesc.h"
-#include "USBCore.h"
-#include "PluggableUSB.h"
+#include "USBD/PluggableUSB.h"
+#include "USBD/USBDesc.h"
+#include "USBD/USBCore.h"
+#include "USBD/PluggableUSB.h"
 
 #if defined(USBCON)
 #ifdef PLUGGABLE_USB_ENABLED

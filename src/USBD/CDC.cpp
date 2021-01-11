@@ -15,7 +15,7 @@
 */
 
 #include "Arduino.h"
-#include "USBAPI.h"
+#include "USBD/USBAPI.h"
 #include "Reset.h"
 #include "Print.h"
 
