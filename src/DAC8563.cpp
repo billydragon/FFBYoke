@@ -23,13 +23,6 @@ DAC8563::DAC8563(uint8_t cs_pin)
   _vref= DEFAULT_VREF; //My Board using vref 3.3V
 };
 
-/*
-DAC8563::DAC8563( uint8_t cs_pin, float vref)
-{
-  _cs_pin = cs_pin;
-  _vref=vref;
-};
-*/
 void DAC8563::begin(ConfigManager *cfg_mangager )
 {
 
@@ -56,11 +49,11 @@ void DAC8563::setPWM(int axis, int32_t force)
             case X_AXIS:
                   if(_Motor_Inv_X == 1)
                   {
-                      DACValue = map(force,-255,255,DAC_MAX,DAC_MIN);
+                      DACValue = map(force,-32767,32767,DAC_MAX,DAC_MIN);
                   }    
                   else
                   {
-                      DACValue = map(force,-255,255,DAC_MIN,DAC_MAX); 
+                      DACValue = map(force,-32767,32767,DAC_MIN,DAC_MAX); 
                   }
                     //  if(_Motor_Dir_Delay > 0)
                     //  {
@@ -71,9 +64,9 @@ void DAC8563::setPWM(int axis, int32_t force)
                   break;
             case Y_AXIS:
                   if(_Motor_Inv_Y == 1)
-                      DACValue = map(force,-255,255,DAC_MAX, DAC_MIN); 
+                      DACValue = map(force,-32767,32767,DAC_MAX, DAC_MIN); 
                       else{            
-                      DACValue = map(force,-255,255,DAC_MIN,DAC_MAX);
+                      DACValue = map(force,-32767,32767,DAC_MIN,DAC_MAX);
                       }
                     // if(_Motor_Dir_Delay > 0)
                     // {

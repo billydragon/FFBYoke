@@ -591,14 +591,17 @@ void Joystick_::forceCalculator(int32_t* forces) {
 	    }
 	forces[0] = (int32_t)((float)1.00 * forces[0] * m_gains[0].totalGain / 10000); // each effect gain * total effect gain = 10000
 	forces[1] = (int32_t)((float)1.00 * forces[1] * m_gains[1].totalGain / 10000); // each effect gain * total effect gain = 10000
-	forces[0] = constrain(forces[0], -255, 255);
-	forces[1] = constrain(forces[1], -255, 255);
+	//forces[0] = constrain(forces[0], -255, 255);
+	//forces[1] = constrain(forces[1], -255, 255);
+	forces[0] = constrain(forces[0], -32767, 32767);		//16 bits
+	forces[1] = constrain(forces[1], -32767, 32767);
 }
 
 int32_t Joystick_::ConstantForceCalculator(volatile TEffectState& effect) 
 {
 	float tempforce = (float)effect.magnitude * effect.gain / 255;
-	tempforce = map(tempforce, -10000, 10000, -255, 255);
+	//tempforce = map(tempforce, -10000, 10000, -255, 255);			//DAC resulusion 16 bit - remove this
+	tempforce = map(tempforce, -10000, 10000, -32767, 32767);
 	return (int32_t)tempforce;
 }
 
@@ -749,7 +752,8 @@ int32_t Joystick_::ConditionForceCalculator(volatile TEffectState& effect, float
 	default:
 		break;
 	}
-	tempForce = map(tempForce, -10000, 10000, -255, 255);
+	//tempForce = map(tempForce, -10000, 10000, -255, 255);
+	tempForce = map(tempForce, -10000, 10000, -32767, 32767);			//16 bits
 	return (int32_t)tempForce;
 }
 

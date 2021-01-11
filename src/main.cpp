@@ -19,7 +19,7 @@ Due_QDEC encoder;
 
 
 int32_t xy_force[2] = {0,0};
- //int32_t last_xy_force[2] = {0,0};
+
 
 double Setpoint[2], Input[2], Output[2];
 //double Kp=2, Ki=5, Kd=1;
@@ -58,9 +58,6 @@ void findCenter(int axis);
 void Push_Button_01_ISR(void);
 void Update_Joystick_Buttons(void);
 void Set_PID_Turnings(void);
-
-//void calculateEncoderPostion_X();
-//void calculateEncoderPostion_Y();
 
 void Set_PID_Turnings()
 {
@@ -153,18 +150,18 @@ void loop() {
 
     }
     
-    xy_force[X_AXIS] = constrain(xy_force[X_AXIS], -255, 255);
-    xy_force[Y_AXIS] = constrain(xy_force[Y_AXIS], -255, 255);
+    xy_force[X_AXIS] = constrain(xy_force[X_AXIS], -32767, 32767);
+    xy_force[Y_AXIS] = constrain(xy_force[Y_AXIS], -32767, 32767);
     
     if (encoder.axis[X_AXIS].currentPosition >= encoder.axis[X_AXIS].maxValue) {
-      xy_force[X_AXIS] = 255;
+      xy_force[X_AXIS] = 32767;
     } else if (encoder.axis[X_AXIS].currentPosition <= encoder.axis[X_AXIS].minValue) {
-      xy_force[X_AXIS] = -255;
+      xy_force[X_AXIS] = -32767;
     }
     if (encoder.axis[Y_AXIS].currentPosition >= encoder.axis[Y_AXIS].maxValue) {
-      xy_force[Y_AXIS] = 255;
+      xy_force[Y_AXIS] = 32767;
     } else if (encoder.axis[Y_AXIS].currentPosition <= encoder.axis[Y_AXIS].minValue) {
-      xy_force[Y_AXIS] = -255;
+      xy_force[Y_AXIS] = -32767;
     }
 
     pwm.setPWM(X_AXIS,xy_force[X_AXIS]);
