@@ -799,6 +799,24 @@ int32_t Joystick_::ApplyEnvelope(volatile TEffectState& effect, int32_t value)
 void Joystick_::end()
 {
 }
+	//set gain functions
+int8_t Joystick_::setGains(Gains* _gains){
+	    if(_gains != nullptr){
+			//it should be added some limition here,but im so tired,it's 2:24 A.M now!
+	        m_gains = _gains;
+	        return 0;
+	    }
+	    return -1;
+	}
+
+	//set effect params funtions
+int8_t Joystick_::setEffectParams(EffectParams* _effect_params){
+	    if(_effect_params != nullptr){
+	        m_effect_params = _effect_params;
+	        return 0;
+	    }
+	    return -1;
+	}
 
 void Joystick_::setButton(uint8_t button, uint8_t value)
 {
