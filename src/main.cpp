@@ -295,26 +295,38 @@ void findCenter(int axis_num)
  
     Axis_Center= (encoder.axis[axis_num].minValue + encoder.axis[axis_num].maxValue)/2;
     Axis_Range =  abs(encoder.axis[axis_num].minValue) + abs(encoder.axis[axis_num].maxValue);
-    gotoPosition(axis_num, Axis_Center);    //goto center X
-    SetZero_Encoder(axis_num);
+   
     #ifdef DEBUG
     sprintf(buff,"[%d]: %ld - 0 - %ld", axis_num, encoder.axis[axis_num].minValue, encoder.axis[axis_num].maxValue);
     Serial.println(buff);
     #endif
-    encoder.axis[axis_num].maxValue = (Axis_Range - AXIS_EDGE_PROTECT)/2;
-    encoder.axis[axis_num].minValue = -encoder.axis[axis_num].maxValue;
-    if(axis_num == X_AXIS)
+    
+
+    switch (axis_num)
     {
+    case X_AXIS:
+      gotoPosition(X_AXIS, Axis_Center);    //goto center X
+      SetZero_Encoder(X_AXIS);
+      encoder.axis[X_AXIS].maxValue = (Axis_Range - AXIS_EDGE_PROTECT)/2;
+    encoder.axis[X_AXIS].minValue = -encoder.axis[X_AXIS].maxValue;
       Joystick.setXAxisRange(encoder.axis[X_AXIS].minValue, encoder.axis[X_AXIS].maxValue);
       Joystick.setXAxis(encoder.axis[X_AXIS].currentPosition);
-    }
-    else
-    {
-       Joystick.setYAxisRange(encoder.axis[Y_AXIS].minValue, encoder.axis[Y_AXIS].maxValue);
+       pwm.setPWM(X_AXIS, 0);
+      break;
+    case Y_AXIS:
+      gotoPosition(Y_AXIS, Axis_Center);    //goto center X
+      SetZero_Encoder(Y_AXIS);
+      encoder.axis[Y_AXIS].maxValue = (Axis_Range - AXIS_EDGE_PROTECT)/2;
+      encoder.axis[Y_AXIS].minValue = -encoder.axis[Y_AXIS].maxValue;
+      Joystick.setYAxisRange(encoder.axis[Y_AXIS].minValue, encoder.axis[Y_AXIS].maxValue);
       Joystick.setYAxis(encoder.axis[Y_AXIS].currentPosition);
+       pwm.setPWM(Y_AXIS, 0);
+      break;
+    default:
+      break;
     }
-    
-    pwm.setPWM(axis_num, 0);
+   
+   
 }
 
 

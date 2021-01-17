@@ -7,11 +7,11 @@
 #define Serial  SerialUSB
 #endif
 
-const GAINS_CONFIG default_Gains[]  ={GAINS_CONFIG{50, 50, 50, 50, 50, 50, 50, 50, 50, 10, 10, 10, 10},
-                                  GAINS_CONFIG{50, 50, 50, 50, 50, 50, 50, 50, 50, 10, 10, 10, 10}};
+const GAINS_CONFIG default_Gains[]  ={GAINS_CONFIG{20, 20, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10},
+                                  GAINS_CONFIG{20, 20, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10}};
                                   //{PIDS_CONFIG{16,1,0.35,0.01,0.01},PIDS_CONFIG{16,1,0.4,0.01,0.01}};   //8bit
-const PIDS_CONFIG default_Pids[]  ={PIDS_CONFIG{2056,1,0.35,0.01,0.01},PIDS_CONFIG{2056,1,0.4,0.01,0.01}};
-const SYSTEM_CONFIGS default_SysConfig  = SYSTEM_CONFIGS{0,0,0,1,0,0,0,0};
+const PIDS_CONFIG default_Pids[]  ={PIDS_CONFIG{4000,1,1.5,0.07,0.01},PIDS_CONFIG{4000,1,1,5,0.07,0.01}};
+const SYSTEM_CONFIGS default_SysConfig  = SYSTEM_CONFIGS{0,0,0,0,0,0,0,0};
 
 byte first_run = 0;
 byte Reset_Flag = 0;
