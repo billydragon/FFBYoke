@@ -93,6 +93,9 @@ const DeviceDescriptor USB_DeviceDescriptorA =
 const QualifierDescriptor USB_DeviceQualifier =
     D_QUALIFIER(0x00,0x00,0x00,64,1);
 
+const QualifierDescriptor USB_DeviceQualifierA =
+    D_QUALIFIER(0xEF,0x02,0x01,64,1);
+
 //! 7.1.20 Test Mode Support
 static const unsigned char test_packet_buffer[] = {
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,                // JKJKJKJK * 9
@@ -412,7 +415,7 @@ static bool USBD_SendDescriptor(USBSetup& setup)
     if (USB_DEVICE_DESCRIPTOR_TYPE == t)
     {
         TRACE_CORE(puts("=> USBD_SendDescriptor : USB_DEVICE_DESCRIPTOR_TYPE\r\n");)
-        if (setup.wLength == 8)
+        if (setup.wLength >= 8)
         {
             _cdcComposite = 1;
         }
@@ -449,8 +452,12 @@ static bool USBD_SendDescriptor(USBSetup& setup)
     }
     else if (USB_DEVICE_QUALIFIER == t)
     {
+        if (setup.wLength >= 8)
+        {
+            _cdcComposite = 1;
+        }
         // Device qualifier descriptor requested
-        desc_addr = (const uint8_t*)&USB_DeviceQualifier;
+        desc_addr = _cdcComposite ? (const uint8_t*)&USB_DeviceQualifierA :(const uint8_t*)&USB_DeviceQualifier;
         if( *desc_addr > setup.wLength ) {
             desc_length = setup.wLength;
         }

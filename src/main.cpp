@@ -34,11 +34,11 @@ PID  myPID[2] = {PID(&Input[X_AXIS], &Output[X_AXIS], &Setpoint[X_AXIS], Kp[X_AX
 volatile long debouncing_time = DEBOUNCE_TIME; //Debouncing Time in Milliseconds
 
 Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID,JOYSTICK_TYPE_JOYSTICK,
-1, 0, // Button Count, Hat Switch Count
-true, true, false, // X and Y, but no Z Axis
-false, false, false, // No Rx, Ry, or Rz
-false, false, // No rudder or throttle
-false, false, false); // No accelerator, brake, or steering
+32, 0, // Button Count, Hat Switch Count
+true, true, true, // X and Y, but no Z Axis
+true, true, true, // No Rx, Ry, or Rz
+true, true, // No rudder or throttle
+true, true, true); // No accelerator, brake, or steering
 
 BUTTONS Buttons; 
 
