@@ -247,6 +247,10 @@ void Push_Button_01_ISR()
         Buttons[0].CurrentState = bState;
         Buttons[0].millis_time = millis();
     }
+    else
+    {
+       Buttons[0].CurrentState = digitalReadFast(Buttons[0].pinNumber);
+    }
   }
       
 }

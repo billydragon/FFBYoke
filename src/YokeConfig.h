@@ -67,7 +67,7 @@
 
 #define ANALOG_RX           A0
 #define ANALOG_RY           A1
-#define DEBOUNCE_TIME       50
+#define DEBOUNCE_TIME       15
 
  struct Axis{
     uint32_t cPR;
