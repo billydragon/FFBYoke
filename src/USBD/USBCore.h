@@ -284,6 +284,9 @@ _Pragma("pack()")
 #define D_QUALIFIER(_class,_subClass,_proto,_packetSize0,_configs) \
 	{ 10, 6, 0x200, _class,_subClass,_proto,_packetSize0,_configs }
 
+#define D_QUALIFIER_A(_class,_subClass,_proto,_packetSize0,_configs) \
+	{ 10, 6, 0x200, _class,_subClass,_proto,_packetSize0,_configs, 0 }
+
 #define D_IAD(_firstInterface, _count, _class, _subClass, _protocol) \
 	{ 8, 11, _firstInterface, _count, _class, _subClass, _protocol, 0 }
 

@@ -10,7 +10,8 @@
 #define MAX_Y_VALUE         2000
 #define TOTALGAIN_X         50
 #define TOTALGAIN_Y         50
-
+#define NUM_OF_BUTTONS      32
+#define NUM_OF_HATSWITCH    0
 #define AXIS_EDGE_PROTECT   50
 
 #define X_AXIS              0

@@ -34,13 +34,13 @@ PID  myPID[2] = {PID(&Input[X_AXIS], &Output[X_AXIS], &Setpoint[X_AXIS], Kp[X_AX
 volatile long debouncing_time = DEBOUNCE_TIME; //Debouncing Time in Milliseconds
 
 Joystick_ Joystick(JOYSTICK_DEFAULT_REPORT_ID,JOYSTICK_TYPE_JOYSTICK,
-32, 0, // Button Count, Hat Switch Count
+NUM_OF_BUTTONS, NUM_OF_HATSWITCH, // Button Count, Hat Switch Count
 true, true, true, // X and Y, but no Z Axis
 true, true, true, // No Rx, Ry, or Rz
 true, true, // No rudder or throttle
 true, true, true); // No accelerator, brake, or steering
 
-BUTTONS Buttons; 
+BUTTONS Buttons[NUM_OF_BUTTONS]; 
 
 volatile uint8_t initialRun = 0;
 
@@ -87,13 +87,13 @@ void setup() {
   Input[ax] = encoder.axis[ax].currentPosition;
   }
   Set_PID_Turnings();
-  Buttons.pinNumber = PUSH_BUTTON_01;
-  Buttons.CurrentState = HIGH;
-  Buttons.LastState = HIGH;
-  Buttons.millis_time = millis();
+  Buttons[0].pinNumber = PUSH_BUTTON_01;
+  Buttons[0].CurrentState = HIGH;
+  Buttons[0].LastState = HIGH;
+  Buttons[0].millis_time = millis();
 
-  pinMode(Buttons.pinNumber,INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(Buttons.pinNumber), Push_Button_01_ISR, CHANGE);
+  pinMode(Buttons[0].pinNumber,INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(Buttons[0].pinNumber), Push_Button_01_ISR, CHANGE);
 
   pwm.begin(&CfgManager);
   pwm.servo_on(X_AXIS);
@@ -176,7 +176,13 @@ void loop() {
 void Update_Joystick_Buttons()
 {
 
-    Joystick.setButton(0, !Buttons.CurrentState);
+  for (int i = 0; i < NUM_OF_BUTTONS; i++) {
+		if (Buttons[i].LastState != Buttons[i].CurrentState) {
+			Buttons[i].LastState = Buttons[i].CurrentState;
+			Joystick.setButton(i, Buttons[i].CurrentState);
+		}
+	}
+    
      
 }
 
@@ -233,14 +239,13 @@ void Set_Gains()
 
 void Push_Button_01_ISR()
 {
-  int bState = digitalReadFast(Buttons.pinNumber);
-  if(Buttons.LastState != bState )
+  int bState = digitalReadFast(Buttons[0].pinNumber);
+  if(Buttons[0].CurrentState != bState )
   {
-     if((long)(millis() - Buttons.millis_time) > debouncing_time ) {
+     if((long)(millis() - Buttons[0].millis_time) > debouncing_time ) {
 
-        Buttons.CurrentState = bState;
-        Buttons.LastState = Buttons.CurrentState; 
-        Buttons.millis_time = millis();
+        Buttons[0].CurrentState = bState;
+        Buttons[0].millis_time = millis();
     }
   }
       
@@ -278,7 +283,7 @@ void findCenter(int axis_num)
   encoder.axis[axis_num].maxValue =0;
   SetZero_Encoder(axis_num);
   
-  while (Buttons.CurrentState)
+  while (Buttons[0].CurrentState)
   {
     encoder.updatePosition(axis_num);
     if(LastPos != encoder.axis[axis_num].currentPosition)
