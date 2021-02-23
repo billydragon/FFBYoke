@@ -136,10 +136,11 @@ bool DynamicHID_::GetReport(USBSetup& setup) {
 	uint8_t report_type = setup.wValueH;
 	if (report_type == DYNAMIC_HID_REPORT_TYPE_INPUT)
 	{
-		//        /* Create the next HID report to send to the host */
-		//        GetNextReport(0xFF, &JoystickReportData);
-		//        /* Write the report data to the control endpoint */
-		//        USB_SendControl(TRANSFER_RELEASE, &JoystickReportData, sizeof(JoystickReportData));
+		if(report_id == 2)
+	  	  {
+	  		USB_SendControl(TRANSFER_RELEASE, pidReportHandler.getPIDStatus(), sizeof(USB_FFBReport_PIDStatus_Input_Data_t));
+
+	  	  }
 	}
 	if (report_type == DYNAMIC_HID_REPORT_TYPE_OUTPUT) {}
 	if (report_type == DYNAMIC_HID_REPORT_TYPE_FEATURE) {

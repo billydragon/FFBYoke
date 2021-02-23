@@ -49,5 +49,6 @@ public:
 	uint8_t* getPIDPool();
 	uint8_t* getPIDBlockLoad();
 	uint8_t* getPIDStatus();
+	void SendPidStateReport();
 };
 #endif

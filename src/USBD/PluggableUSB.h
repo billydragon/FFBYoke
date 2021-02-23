@@ -22,6 +22,7 @@
 
 #include "USBD/USBAPI.h"
 
+
 #if defined(USBCON)
 
 class PluggableUSBModule {

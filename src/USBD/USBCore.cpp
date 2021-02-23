@@ -93,8 +93,8 @@ const DeviceDescriptor USB_DeviceDescriptorA =
 const QualifierDescriptor USB_DeviceQualifier =
     D_QUALIFIER(0x00,0x00,0x00,64,1);
 
-const QualifierDescriptorA USB_DeviceQualifierA =
-    D_QUALIFIER_A(0xEF,0x02,0x01,64,1);
+const QualifierDescriptor USB_DeviceQualifierA =
+    D_QUALIFIER(0xEF,0x02,0x01,64,1);
 
 //! 7.1.20 Test Mode Support
 static const unsigned char test_packet_buffer[] = {
