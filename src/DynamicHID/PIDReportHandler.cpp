@@ -201,6 +201,7 @@ void PIDReportHandler::SetCondition(USB_FFBReport_SetCondition_Output_Data_t* da
         effect->conditions[axis].positiveSaturation = data->positiveSaturation;
         effect->conditions[axis].negativeSaturation = data->negativeSaturation;
         effect->conditions[axis].deadBand = data->deadBand;
+		effect->conditionBlocksCount++;
 }
 
 void PIDReportHandler::SetPeriodic(USB_FFBReport_SetPeriodic_Output_Data_t* data, volatile TEffectState* effect)
@@ -288,7 +289,7 @@ void PIDReportHandler::UppackUsbData(uint8_t* data, uint16_t len)
 	case 10:
 		//Serial.println("EffectOperation");
 		EffectOperation((USB_FFBReport_EffectOperation_Output_Data_t*)data);
-		SendPidStateReport();
+		
 		break;
 	case 11:
 		//Serial.println("BlockFree");
@@ -297,7 +298,7 @@ void PIDReportHandler::UppackUsbData(uint8_t* data, uint16_t len)
 	case 12:
 		//Serial.println("DeviceControl");
 		DeviceControl((USB_FFBReport_DeviceControl_Output_Data_t*)data);
-		SendPidStateReport();
+		
 		break;
 	case 13:
 		//Serial.println("DeviceGain");
@@ -307,20 +308,10 @@ void PIDReportHandler::UppackUsbData(uint8_t* data, uint16_t len)
 		//Serial.println("SetCustomForce");
 		SetCustomForce((USB_FFBReport_SetCustomForce_Output_Data_t*)data);
 		break;
-	case 0x11:					////add Effect Report. Feature
-		CreateNewEffect((USB_FFBReport_CreateNewEffect_Feature_Data_t*) data);
-		break;
+	
 	default:
 		break;
 	}
-}
-
-void  PIDReportHandler::SendPidStateReport()
-{
-	uint8_t pid_rp[2];
-	pid_rp[0] = pidState.status;
-	pid_rp[1] = pidState.effectBlockIndex;
-	DynamicHID().SendReport(pidState.reportId, pid_rp, sizeof(pid_rp));
 }
 
 

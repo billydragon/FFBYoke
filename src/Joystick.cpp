@@ -20,7 +20,6 @@
 
 #include "Joystick.h"
 #include "FFBDescriptor.h"
-#include "filters/filters.h"
 #if defined(_USING_DYNAMIC_HID)
 
 #define JOYSTICK_REPORT_ID_INDEX 7
@@ -41,13 +40,6 @@
 #define JOYSTICK_INCLUDE_ACCELERATOR B00000100
 #define JOYSTICK_INCLUDE_BRAKE       B00001000
 #define JOYSTICK_INCLUDE_STEERING    B00010000
-
-const float cutoff_freq_damper   = 5.0;  //Cutoff frequency in Hz
-const float sampling_time_damper = 0.001; //Sampling time in seconds.
-IIR::ORDER  order  = IIR::ORDER::OD1; // Order (OD1 to OD4)
-Filter damperFilter(cutoff_freq_damper, sampling_time_damper, order);
-Filter interiaFilter(cutoff_freq_damper, sampling_time_damper, order);
-Filter frictionFilter(cutoff_freq_damper, sampling_time_damper, order);
 
 Joystick_::Joystick_(
 	uint8_t hidReportId,
@@ -502,11 +494,17 @@ int32_t Joystick_::getEffectForce(volatile TEffectState& effect,Gains _gains,Eff
 
     uint8_t direction;
     uint8_t condition;
+	bool useForceDirectionForConditionEffect = (effect.enableAxis == DIRECTION_ENABLE && effect.conditionBlocksCount == 1);
     if (effect.enableAxis == DIRECTION_ENABLE)
     {
         direction = effect.directionX;
         condition = 0; // If the Direction Enable flag is set, only one Condition Parameter Block is defined
-    }
+		if (effect.conditionBlocksCount > 1) {
+            condition = axis;
+        } else {
+	        condition = 0; // only one Condition Parameter Block is defined
+		}
+	}
     else
     {
         direction = axis == 0 ? effect.directionX : effect.directionY;
@@ -542,10 +540,16 @@ int32_t Joystick_::getEffectForce(volatile TEffectState& effect,Gains _gains,Eff
 	    	break;
 	    case USB_EFFECT_SPRING://8
 	    	force = ConditionForceCalculator(effect, NormalizeRange(_effect_params.springPosition, _effect_params.springMaxPosition), condition) * _gains.springGain;
-	    	break;
+			if (useForceDirectionForConditionEffect) {
+				force *= angle_ratio;
+			}
+			break;
 	    case USB_EFFECT_DAMPER://9
 	    	force = ConditionForceCalculator(effect, NormalizeRange(_effect_params.damperVelocity, _effect_params.damperMaxVelocity), condition) * _gains.damperGain;
-	    	break;
+	    	if (useForceDirectionForConditionEffect) {
+				force *= angle_ratio;
+			}
+			break;
 	    case USB_EFFECT_INERTIA://10
 	    	if (_effect_params.inertiaAcceleration < 0 && _effect_params.frictionPositionChange < 0) {
 	    		force = ConditionForceCalculator(effect, abs(NormalizeRange(_effect_params.inertiaAcceleration, _effect_params.inertiaMaxAcceleration)), condition) * _gains.inertiaGain;
@@ -553,10 +557,16 @@ int32_t Joystick_::getEffectForce(volatile TEffectState& effect,Gains _gains,Eff
 	    	else if (_effect_params.inertiaAcceleration < 0 && _effect_params.frictionPositionChange > 0) {
 	    		force = -1 * ConditionForceCalculator(effect, abs(NormalizeRange(_effect_params.inertiaAcceleration, _effect_params.inertiaMaxAcceleration)), condition) * _gains.inertiaGain;
 	    	}
+			if (useForceDirectionForConditionEffect) {
+				force *= angle_ratio;
+			}
 	    	break;
 	    case USB_EFFECT_FRICTION://11
 	    		force = ConditionForceCalculator(effect, NormalizeRange(_effect_params.frictionPositionChange, _effect_params.frictionMaxPositionChange), condition) * _gains.frictionGain;
-	    		break;
+	    		if (useForceDirectionForConditionEffect) {
+				force *= angle_ratio;
+			}
+				break;
 	    case USB_EFFECT_CUSTOM://12
 	    		break;
 	    }
@@ -568,7 +578,7 @@ int32_t Joystick_::getEffectForce(volatile TEffectState& effect,Gains _gains,Eff
 void Joystick_::forceCalculator(int32_t* forces) {
     forces[0] = 0;
     forces[1] = 0;
-        //int32_t force = 0;
+        int32_t force = 0;
 	    for (int id = 0; id < MAX_EFFECTS; id++) {
 	    	volatile TEffectState& effect = DynamicHID().pidReportHandler.g_EffectStates[id];
 	    	if ((effect.state == MEFFECTSTATE_PLAYING) &&
@@ -591,17 +601,14 @@ void Joystick_::forceCalculator(int32_t* forces) {
 	    }
 	forces[0] = (int32_t)((float)1.00 * forces[0] * m_gains[0].totalGain / 10000); // each effect gain * total effect gain = 10000
 	forces[1] = (int32_t)((float)1.00 * forces[1] * m_gains[1].totalGain / 10000); // each effect gain * total effect gain = 10000
-	//forces[0] = constrain(forces[0], -255, 255);
-	//forces[1] = constrain(forces[1], -255, 255);
-	forces[0] = constrain(forces[0], -32767, 32767);		//16 bits
-	forces[1] = constrain(forces[1], -32767, 32767);
+	forces[0] = constrain(forces[0], -255, 255);
+	forces[1] = constrain(forces[1], -255, 255);
 }
 
 int32_t Joystick_::ConstantForceCalculator(volatile TEffectState& effect) 
 {
 	float tempforce = (float)effect.magnitude * effect.gain / 255;
-	//tempforce = map(tempforce, -10000, 10000, -255, 255);			//DAC resulusion 16 bit - remove this
-	tempforce = map(tempforce, -10000, 10000, -32767, 32767);
+	tempforce = map(tempforce, -10000, 10000, -255, 255);
 	return (int32_t)tempforce;
 }
 
@@ -737,23 +744,22 @@ int32_t Joystick_::ConditionForceCalculator(volatile TEffectState& effect, float
 		tempForce = (metric - (float)1.00 * (cpOffset + deadBand) / 10000) * positiveCoefficient;
 		tempForce = (tempForce > positiveSaturation ? positiveSaturation : tempForce);
 	}
-	//else return 0;
+	else return 0;
 	tempForce = -tempForce * effect.gain / 255;
 	switch (effect.effectType) {
 	case  USB_EFFECT_DAMPER:
-		tempForce = damperFilter.filterIn(tempForce);
+		//tempForce = damperFilter.filterIn(tempForce);
 		break;
 	case USB_EFFECT_INERTIA:
-		tempForce = interiaFilter.filterIn(tempForce);
+		//tempForce = interiaFilter.filterIn(tempForce);
 		break;
 	case USB_EFFECT_FRICTION:
-		tempForce = frictionFilter.filterIn(tempForce);
+		//tempForce = frictionFilter.filterIn(tempForce);
 		break;
 	default:
 		break;
 	}
-	//tempForce = map(tempForce, -10000, 10000, -255, 255);
-	tempForce = map(tempForce, -10000, 10000, -32767, 32767);			//16 bits
+	tempForce = map(tempForce, -10000, 10000, -255, 255);
 	return (int32_t)tempForce;
 }
 
@@ -799,24 +805,6 @@ int32_t Joystick_::ApplyEnvelope(volatile TEffectState& effect, int32_t value)
 void Joystick_::end()
 {
 }
-	//set gain functions
-int8_t Joystick_::setGains(Gains* _gains){
-	    if(_gains != nullptr){
-			//it should be added some limition here,but im so tired,it's 2:24 A.M now!
-	        m_gains = _gains;
-	        return 0;
-	    }
-	    return -1;
-	}
-
-	//set effect params funtions
-int8_t Joystick_::setEffectParams(EffectParams* _effect_params){
-	    if(_effect_params != nullptr){
-	        m_effect_params = _effect_params;
-	        return 0;
-	    }
-	    return -1;
-	}
 
 void Joystick_::setButton(uint8_t button, uint8_t value)
 {
